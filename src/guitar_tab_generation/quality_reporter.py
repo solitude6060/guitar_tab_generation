@@ -1,7 +1,7 @@
 """Quality reporting and MVP hard-fail enforcement."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Iterable
 
 from .contracts import (
     CONFIDENCE_THRESHOLDS,
@@ -13,6 +13,7 @@ from .contracts import (
     WARNING_LOW_FINGERING_CONFIDENCE,
     WARNING_LOW_NOTE_CONFIDENCE,
     WARNING_LOW_SECTION_CONFIDENCE,
+    WARNING_UNPLAYABLE_NOTE,
 )
 from .schema import validate_arrangement
 
@@ -40,6 +41,11 @@ def warning(code: str, message: str, *, severity: str = "warning", time_range: l
 def _warning_codes(warnings: Iterable[dict]) -> set[str]:
     return {str(item.get("code")) for item in warnings}
 
+
+
+
+def _has_warning(arrangement: dict, code: str) -> bool:
+    return code in _warning_codes(arrangement.get("warnings", []))
 
 def _missing_confidence_warnings(arrangement: dict) -> list[dict]:
     warnings = arrangement.get("warnings", [])
@@ -103,7 +109,7 @@ def _unplayable_failures(arrangement: dict) -> list[dict]:
             failures.append({"code": HARD_FAIL_UNPLAYABLE_TAB, "message": f"Illegal string/fret in position {position!r}"})
         if note_id and note_id not in note_ids:
             failures.append({"code": HARD_FAIL_UNPLAYABLE_TAB, "message": f"Position references unknown note_id {note_id!r}."})
-        if playability not in {"playable", "degraded", "unmapped"}:
+        if playability not in {"playable", "degraded", "unplayable"}:
             failures.append({"code": HARD_FAIL_UNPLAYABLE_TAB, "message": f"Unknown playability {playability!r}."})
 
     if arrangement.get("note_events") and not positions:
@@ -267,7 +273,7 @@ def build_quality_report(arrangement: dict, *, fixture_metadata: dict | None = N
     }
 
     return {
-        "status": "failed" if hard_failures else ("warning" if warnings else "pass"),
+        "status": "failed" if hard_failures else "passed",
         "hard_failures": hard_failures,
         "warnings": warnings,
         "checks": checks,
