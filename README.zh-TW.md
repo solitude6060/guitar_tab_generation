@@ -8,8 +8,8 @@
 
 本專案依據已批准的規劃文件執行：
 
-- `.omx/plans/prd-guitar-tab-generation-mvp-20260512.md`
-- `.omx/plans/test-spec-guitar-tab-generation-mvp-20260512.md`
+- `docs/plans/prd-guitar-tab-generation-mvp-20260512.md`
+- `docs/plans/test-spec-guitar-tab-generation-mvp-20260512.md`
 
 第一版刻意收窄：
 

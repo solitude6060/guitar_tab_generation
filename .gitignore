@@ -1,8 +1,5 @@
-# OMX runtime state/logs (planning artifacts under .omx/plans, .omx/specs, .omx/context, .omx/interviews stay trackable)
-.omx/state/
-.omx/logs/
-.omx/metrics.json
-.omx/tmux-hook.json
+# OMX local runtime/planning state (do not publish to GitHub)
+.omx/
 __pycache__/
 *.py[cod]
 .pytest_cache/

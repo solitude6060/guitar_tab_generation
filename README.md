@@ -8,8 +8,8 @@ Local-audio-first MVP for generating practice-usable guitar sketch TAB from lega
 
 This project follows the approved planning artifacts:
 
-- `.omx/plans/prd-guitar-tab-generation-mvp-20260512.md`
-- `.omx/plans/test-spec-guitar-tab-generation-mvp-20260512.md`
+- `docs/plans/prd-guitar-tab-generation-mvp-20260512.md`
+- `docs/plans/test-spec-guitar-tab-generation-mvp-20260512.md`
 
 The MVP is intentionally narrow:
 

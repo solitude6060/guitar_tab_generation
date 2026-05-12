@@ -6,9 +6,9 @@
 
 功能開始前，先寫或更新：
 
-- `.omx/plans/<feature>-prd-YYYYMMDD.md`
-- `.omx/plans/<feature>-test-spec-YYYYMMDD.md`
-- `.omx/adr/YYYYMMDD-<decision>.md`（若涉及架構/依賴/schema/政策）
+- `docs/plans/<feature>-prd-YYYYMMDD.md`
+- `docs/plans/<feature>-test-spec-YYYYMMDD.md`
+- `docs/adr/YYYYMMDD-<decision>.md`（若涉及架構/依賴/schema/政策）
 
 沒有檔案化規格，不開始寫功能。
 
@@ -39,8 +39,8 @@ PYTHONPATH=src python3 -m guitar_tab_generation.cli transcribe fixtures/simple_c
 
 聊天中的計畫不算完成。重要資訊必須落到 repo：
 
-- Roadmap / feature plan：`.omx/plans/`
-- ADR：`.omx/adr/`
+- Roadmap / feature plan：`docs/plans/`
+- ADR：`docs/adr/`
 - 使用者文件：`docs/*.zh-TW.md`
 - 測試 fixture 與 rubric：`fixtures/`、`tests/fixtures/`
 
