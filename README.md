@@ -1,5 +1,7 @@
 # Guitar Tab Generation MVP
 
+繁體中文文件：[`README.zh-TW.md`](README.zh-TW.md)；使用規範：[`docs/usage-guardrails.zh-TW.md`](docs/usage-guardrails.zh-TW.md)。
+
 Local-audio-first MVP for generating practice-usable guitar sketch TAB from legally provided 30–90 second audio clips.
 
 ## MVP scope
