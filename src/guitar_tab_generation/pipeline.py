@@ -1,108 +1,111 @@
-"""End-to-end placeholder pipeline for local-audio-first MVP artifacts."""
+"""End-to-end local-audio MVP orchestration."""
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any
+import json
 
 from .audio_preprocess import normalize_audio
+from .contracts import CONFIDENCE_THRESHOLDS, WARNING_LOW_FINGERING_CONFIDENCE, WARNING_LOW_SECTION_CONFIDENCE
 from .guitar_arranger import arrange_notes
-from .input_adapter import AudioInput
+from .input_adapter import load_fixture_metadata, resolve_local_audio
 from .pitch_transcription import transcribe_notes
 from .quality_reporter import build_quality_report
-from .renderer import render_markdown_tab
+from .renderer import write_outputs
 from .rhythm_analysis import analyze_rhythm
 from .schema import base_arrangement
-from .section_detector import detect_sections
 from .tonal_chord_analysis import analyze_chords
 
 
-def load_fixture_metadata(path: str | Path | None) -> dict[str, Any] | None:
-    if path is None:
-        return None
-    with Path(path).open(encoding="utf-8") as handle:
-        return json.load(handle)
+def _average(values: list[float]) -> float:
+    return sum(values) / len(values) if values else 0.0
 
 
-def run_placeholder_pipeline(
-    audio: AudioInput,
-    out_dir: str | Path,
+def transcribe_to_tab(
+    input_uri: str,
+    out_dir: Path,
     *,
-    fixture_metadata: dict[str, Any] | None = None,
-) -> dict[str, Path]:
-    """Run deterministic scaffold stages and write required MVP artifacts."""
-    out = Path(out_dir)
-    out.mkdir(parents=True, exist_ok=True)
-
-    normalized = normalize_audio(audio, out)
-    duration = audio.trim["end"] - audio.trim["start"]
-    rhythm = analyze_rhythm(duration, fixture_metadata)
-    chords, chord_warnings = analyze_chords(duration, fixture_metadata)
-    notes, note_warnings = transcribe_notes(duration, fixture_metadata)
-    sections, section_warnings = detect_sections(duration, fixture_metadata)
-    positions, playability_warnings, fingering_confidence = arrange_notes(notes)
+    trim_start: float | None = None,
+    trim_end: float | None = None,
+) -> tuple[dict, dict]:
+    audio_input = resolve_local_audio(input_uri, trim_start=trim_start, trim_end=trim_end)
+    fixture_metadata = load_fixture_metadata(audio_input.path)
+    normalized = normalize_audio(audio_input, out_dir)
+    rhythm = analyze_rhythm(audio_input.duration_seconds, fixture_metadata)
 
     source = {
-        "input_type": audio.input_type,
-        "input_uri": audio.input_uri,
-        "rights_attestation": audio.rights_attestation,
-        "trim": audio.trim,
+        "input_type": audio_input.input_type,
+        "input_uri": audio_input.input_uri,
+        "rights_attestation": audio_input.rights_attestation,
+        "trim": {"start": audio_input.trim_start, "end": audio_input.trim_end},
         "stems": [
             {
                 "name": "mix",
                 "path": normalized["path"],
                 "model": None,
                 "confidence": 1.0,
-                "provenance": normalized["provenance"],
+                "provenance": {"stage": "audio_preprocess", "input": "local_audio"},
             }
         ],
     }
     arrangement = base_arrangement(
         sample_rate=int(normalized["sample_rate"]),
         tempo_bpm=float(rhythm["tempo_bpm"]),
-        duration_seconds=duration,
+        duration_seconds=audio_input.duration_seconds,
         source=source,
     )
-    arrangement["note_events"] = notes
-    arrangement["chord_spans"] = chords
-    arrangement["section_spans"] = sections
-    arrangement["positions"] = positions
-    arrangement["warnings"] = [*chord_warnings, *note_warnings, *section_warnings, *playability_warnings]
-    arrangement["confidence"].update(
+
+    chords, chord_warnings = analyze_chords(audio_input.duration_seconds, fixture_metadata)
+    notes, note_warnings = transcribe_notes(audio_input.duration_seconds, fixture_metadata)
+    positions, playability_warnings, fingering_confidence = arrange_notes(notes)
+    sections = (fixture_metadata or {}).get("section_spans") or [
+        {"start": 0.0, "end": audio_input.duration_seconds, "label": "Main sketch", "confidence": 0.66}
+    ]
+    sections = [
         {
-            "rhythm": float(rhythm.get("confidence", 0.8)),
-            "chords": _average_confidence(chords),
-            "notes": _average_confidence(notes),
-            "fingering": fingering_confidence,
+            "start": float(section["start"]),
+            "end": float(section["end"]),
+            "label": str(section["label"]),
+            "confidence": float(section.get("confidence", 0.66)),
         }
-    )
-    arrangement["confidence"]["overall"] = _average_values(
-        [
-            arrangement["confidence"]["rhythm"],
-            arrangement["confidence"]["chords"],
-            arrangement["confidence"]["notes"],
-            arrangement["confidence"]["fingering"],
-        ]
-    )
+        for section in sections
+    ]
 
+    arrangement["chord_spans"] = chords
+    arrangement["note_events"] = notes
+    arrangement["positions"] = positions
+    arrangement["section_spans"] = sections
+    arrangement["warnings"].extend(chord_warnings + note_warnings + playability_warnings)
+
+    section_confidence = _average([section["confidence"] for section in sections])
+    if section_confidence < CONFIDENCE_THRESHOLDS["sections"]:
+        arrangement["warnings"].append({
+            "code": WARNING_LOW_SECTION_CONFIDENCE,
+            "severity": "warning",
+            "message": "Section confidence is below threshold.",
+        })
+    if fingering_confidence < CONFIDENCE_THRESHOLDS["fingering"]:
+        arrangement["warnings"].append({
+            "code": WARNING_LOW_FINGERING_CONFIDENCE,
+            "severity": "warning",
+            "message": "Fingering confidence is below threshold.",
+        })
+
+    arrangement["confidence"].update({
+        "overall": round(_average([
+            float(rhythm["confidence"]),
+            _average([chord["confidence"] for chord in chords]),
+            _average([note["confidence"] for note in notes]),
+            fingering_confidence,
+        ]), 3),
+        "rhythm": float(rhythm["confidence"]),
+        "chords": round(_average([chord["confidence"] for chord in chords]), 3),
+        "notes": round(_average([note["confidence"] for note in notes]), 3),
+        "fingering": round(fingering_confidence, 3),
+    })
+
+    (out_dir / "notes.json").write_text(json.dumps(notes, indent=2) + "\n", encoding="utf-8")
+    (out_dir / "chords.json").write_text(json.dumps(chords, indent=2) + "\n", encoding="utf-8")
+    (out_dir / "sections.json").write_text(json.dumps(sections, indent=2) + "\n", encoding="utf-8")
     quality_report = build_quality_report(arrangement, fixture_metadata=fixture_metadata)
-
-    arrangement_path = out / "arrangement.json"
-    quality_path = out / "quality_report.json"
-    tab_path = out / "tab.md"
-    arrangement_path.write_text(json.dumps(arrangement, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    quality_path.write_text(json.dumps(quality_report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    tab_path.write_text(render_markdown_tab(arrangement, quality_report), encoding="utf-8")
-    return {"arrangement": arrangement_path, "quality_report": quality_path, "tab": tab_path}
-
-
-def _average_confidence(items: list[dict]) -> float:
-    if not items:
-        return 0.0
-    return _average_values([float(item.get("confidence", 0.0)) for item in items])
-
-
-def _average_values(values: list[float]) -> float:
-    if not values:
-        return 0.0
-    return round(sum(values) / len(values), 3)
+    write_outputs(out_dir, arrangement, quality_report)
+    return arrangement, quality_report
