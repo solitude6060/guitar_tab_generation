@@ -1,0 +1,5 @@
+# OMX runtime state/logs (planning artifacts under .omx/plans, .omx/specs, .omx/context, .omx/interviews stay trackable)
+.omx/state/
+.omx/logs/
+.omx/metrics.json
+.omx/tmux-hook.json
