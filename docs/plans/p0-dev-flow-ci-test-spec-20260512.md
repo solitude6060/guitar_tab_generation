@@ -42,15 +42,15 @@ uv run guitar-tab-generation --help
 
 - 所有測試通過。
 - CLI help exit code 0。
-- pytest warning 需在 P0 中消除或明確記錄為暫時接受。
+- pytest warning 已在 uv-first 設定中移除，P0 需保持 pytest 輸出乾淨。
 
 ## 5. CI Checks
 
 GitHub Actions workflow 應至少包含：
 
-- checkout。
-- Python 3.11 setup。
-- `uv sync --group dev` 或等價 local package setup。
+- checkout（`actions/checkout@v6`，`fetch-depth: 0` 供 history hygiene check）。
+- Python 3.11 setup（`actions/setup-python@v6`，讀取 `.python-version`）。
+- `uv sync --locked --group dev` 或等價 local package setup。
 - `uv run pytest -q`。
 - `uv run guitar-tab-generation --help`。
 

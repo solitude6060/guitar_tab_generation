@@ -57,12 +57,7 @@ uv run guitar-tab-generation --help
 
 ### R4：pytest warning 決策
 
-目前 pytest 有 `Unknown config option: pythonpath` warning。P0 必須選一個：
-
-- 修正成不需要 warning 的設定；或
-- 在 ADR / PRD 中明確記錄暫時接受原因。
-
-建議：修正 warning，因為 CI 應該保持乾淨。
+目前已移除舊 `pythonpath` pytest 設定；P0 必須保持 `uv run pytest -q` 無 pytest config warning。
 
 ## 6. Acceptance Criteria
 
