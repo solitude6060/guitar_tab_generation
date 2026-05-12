@@ -25,14 +25,14 @@
 基本驗證：
 
 ```bash
-PYTHONPATH=src python3 -m pytest -q
-PYTHONPATH=src python3 -m guitar_tab_generation.cli --help
+uv run pytest -q
+uv run guitar-tab-generation --help
 ```
 
 涉及輸出 artifact 時，至少跑一個 golden fixture：
 
 ```bash
-PYTHONPATH=src python3 -m guitar_tab_generation.cli transcribe fixtures/simple_chords_30_90s.wav --out /tmp/guitar-tab-simple
+uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --out /tmp/guitar-tab-simple
 ```
 
 ## 3. Planning with files

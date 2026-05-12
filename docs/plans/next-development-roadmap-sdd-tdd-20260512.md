@@ -72,16 +72,16 @@ docs/<feature>.zh-TW.md
 5. **Full verification**：至少跑：
 
 ```bash
-PYTHONPATH=src python3 -m pytest -q
-PYTHONPATH=src python3 -m guitar_tab_generation.cli --help
+uv run pytest -q
+uv run guitar-tab-generation --help
 ```
 
 若涉及 CLI/e2e，另跑對應 fixture：
 
 ```bash
-PYTHONPATH=src python3 -m guitar_tab_generation.cli transcribe fixtures/simple_chords_30_90s.wav --out /tmp/guitar-tab-simple
-PYTHONPATH=src python3 -m guitar_tab_generation.cli transcribe fixtures/single_note_riff_30_90s.wav --out /tmp/guitar-tab-riff
-PYTHONPATH=src python3 -m guitar_tab_generation.cli transcribe fixtures/single_note_lead_30_90s.wav --out /tmp/guitar-tab-lead
+uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --out /tmp/guitar-tab-simple
+uv run guitar-tab-generation transcribe fixtures/single_note_riff_30_90s.wav --out /tmp/guitar-tab-riff
+uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --out /tmp/guitar-tab-lead
 ```
 
 ## 5. Git Dev Flow
@@ -139,7 +139,7 @@ Not-tested: <未驗證項目>
 
 - 文件存在且連到 `README.zh-TW.md`。
 - CI 或本機驗證指令明確。
-- `PYTHONPATH=src python3 -m pytest -q` 通過。
+- `uv run pytest -q` 通過。
 
 ### P1：把 stub 音訊分析升級為可替換 adapter 架構
 
@@ -233,10 +233,10 @@ Not-tested: <未驗證項目>
 ```bash
 git switch -c feature/dev-flow-and-ci
 # Red: 新增一個檢查 template/docs 存在的測試或文件 lint（若採用）
-PYTHONPATH=src python3 -m pytest -q
+uv run pytest -q
 # Green: 補文件/CI
-PYTHONPATH=src python3 -m pytest -q
-PYTHONPATH=src python3 -m guitar_tab_generation.cli --help
+uv run pytest -q
+uv run guitar-tab-generation --help
 git add .
 git commit
 git push -u origin feature/dev-flow-and-ci
