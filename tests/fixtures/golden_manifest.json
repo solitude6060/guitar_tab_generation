@@ -1,0 +1,49 @@
+{
+  "fixtures": [
+    {
+      "id": "simple_chords_30_90s",
+      "kind": "simple_chords",
+      "audio_path": "audio/simple_chords_30_90s.wav",
+      "source_statement": "Synthetic self-created placeholder fixture; no third-party recording is embedded in this repository.",
+      "rights_attestation": "self_created",
+      "duration_seconds": 30.0,
+      "trim": {"start": 0.0, "end": 30.0},
+      "rubric_record": "rubric_records/simple_chords_30_90s.json",
+      "expected_outputs": {
+        "tab_md": "out/simple_chords/tab.md",
+        "arrangement_json": "out/simple_chords/arrangement.json",
+        "quality_report_json": "out/simple_chords/quality_report.json"
+      }
+    },
+    {
+      "id": "single_note_riff_30_90s",
+      "kind": "single_note_riff",
+      "audio_path": "audio/single_note_riff_30_90s.wav",
+      "source_statement": "Synthetic self-created placeholder fixture; no third-party recording is embedded in this repository.",
+      "rights_attestation": "self_created",
+      "duration_seconds": 30.0,
+      "trim": {"start": 0.0, "end": 30.0},
+      "rubric_record": "rubric_records/single_note_riff_30_90s.json",
+      "expected_outputs": {
+        "tab_md": "out/riff/tab.md",
+        "arrangement_json": "out/riff/arrangement.json",
+        "quality_report_json": "out/riff/quality_report.json"
+      }
+    },
+    {
+      "id": "single_note_lead_30_90s",
+      "kind": "single_note_lead",
+      "audio_path": "audio/single_note_lead_30_90s.wav",
+      "source_statement": "Synthetic self-created placeholder fixture; no third-party recording is embedded in this repository.",
+      "rights_attestation": "self_created",
+      "duration_seconds": 30.0,
+      "trim": {"start": 0.0, "end": 30.0},
+      "rubric_record": "rubric_records/single_note_lead_30_90s.json",
+      "expected_outputs": {
+        "tab_md": "out/lead/tab.md",
+        "arrangement_json": "out/lead/arrangement.json",
+        "quality_report_json": "out/lead/quality_report.json"
+      }
+    }
+  ]
+}
