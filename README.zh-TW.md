@@ -83,4 +83,5 @@ PYTHONPATH=src python3 -m guitar_tab_generation.cli --help
 完整使用與驗收規則請看：
 
 - `docs/usage-guardrails.zh-TW.md`
+- `docs/development-flow.zh-TW.md`
 - `docs/usage-guardrails.md`
