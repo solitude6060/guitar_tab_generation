@@ -1,8 +1,7 @@
 """Quality reporting and MVP hard-fail enforcement."""
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Iterable
+from typing import Any
 
 from .contracts import (
     CONFIDENCE_THRESHOLDS,
@@ -17,25 +16,18 @@ from .contracts import (
 )
 from .schema import validate_arrangement
 
-
-@dataclass(frozen=True)
-class QualityReport:
-    """Machine-readable quality gate result."""
-
-    status: str
-    hard_failures: list[dict]
-    warnings: list[dict]
-    schema_errors: list[str]
-    summary: str
-
-    def to_dict(self) -> dict:
-        return {
-            "status": self.status,
-            "hard_failures": self.hard_failures,
-            "warnings": self.warnings,
-            "schema_errors": self.schema_errors,
-            "summary": self.summary,
-        }
+WARNING_FOR_KIND = {
+    "notes": WARNING_LOW_NOTE_CONFIDENCE,
+    "chords": WARNING_LOW_CHORD_CONFIDENCE,
+    "sections": WARNING_LOW_SECTION_CONFIDENCE,
+    "fingering": WARNING_LOW_FINGERING_CONFIDENCE,
+}
+COLLECTION_FOR_KIND = {
+    "notes": "note_events",
+    "chords": "chord_spans",
+    "sections": "section_spans",
+    "fingering": "positions",
+}
 
 
 def warning(code: str, message: str, *, severity: str = "warning", time_range: list[float] | None = None) -> dict:
@@ -160,6 +152,127 @@ def evaluate_quality(arrangement: dict, *, fixture_metadata: dict | None = None)
     )
 
 
+def _append_hard_failure(hard_failures: list[dict], code: str, message: str, *, path: str | None = None) -> None:
+    failure: dict[str, str] = {"code": code, "message": message}
+    if path is not None:
+        failure["path"] = path
+    hard_failures.append(failure)
+
+
+def _confidence_thresholds(arrangement: dict) -> dict[str, float]:
+    thresholds = dict(CONFIDENCE_THRESHOLDS)
+    configured = arrangement.get("confidence", {}).get("thresholds", {})
+    for kind in thresholds:
+        value = configured.get(kind)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            thresholds[kind] = float(value)
+    return thresholds
+
+
+def _hard_fail_low_confidence_without_warning(arrangement: dict, hard_failures: list[dict]) -> None:
+    confidence = arrangement.get("confidence", {})
+    thresholds = _confidence_thresholds(arrangement)
+
+    for kind, threshold in thresholds.items():
+        warning_code = WARNING_FOR_KIND[kind]
+        aggregate = confidence.get(kind)
+        if isinstance(aggregate, (int, float)) and not isinstance(aggregate, bool):
+            if float(aggregate) < threshold and not _has_warning(arrangement, warning_code):
+                _append_hard_failure(
+                    hard_failures,
+                    HARD_FAIL_LOW_CONFIDENCE_WITHOUT_WARNING,
+                    f"{kind} confidence {float(aggregate):.2f} is below {threshold:.2f} without {warning_code}.",
+                    path=f"$.confidence.{kind}",
+                )
+
+        collection_name = COLLECTION_FOR_KIND[kind]
+        for index, item in enumerate(arrangement.get(collection_name, [])):
+            if not isinstance(item, dict):
+                continue
+            value = item.get("confidence")
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                if float(value) < threshold and not _has_warning(arrangement, warning_code):
+                    _append_hard_failure(
+                        hard_failures,
+                        HARD_FAIL_LOW_CONFIDENCE_WITHOUT_WARNING,
+                        f"{collection_name}[{index}] confidence {float(value):.2f} is below {threshold:.2f} without {warning_code}.",
+                        path=f"$.{collection_name}[{index}].confidence",
+                    )
+
+
+def _hard_fail_unplayable_positions(arrangement: dict, hard_failures: list[dict]) -> None:
+    for index, position in enumerate(arrangement.get("positions", [])):
+        if not isinstance(position, dict):
+            _append_hard_failure(hard_failures, HARD_FAIL_UNPLAYABLE_TAB, "TAB position must be an object.", path=f"$.positions[{index}]")
+            continue
+        playability = str(position.get("playability", "playable")).lower()
+        if playability in {"unplayable", "impossible"}:
+            _append_hard_failure(
+                hard_failures,
+                HARD_FAIL_UNPLAYABLE_TAB,
+                "Unplayable TAB must fail or be degraded before rendering.",
+                path=f"$.positions[{index}].playability",
+            )
+
+
+def validate_golden_fixture_record(fixture_metadata: dict[str, Any]) -> list[dict]:
+    """Return hard failures for missing legal fixture/manual rubric evidence."""
+
+    hard_failures: list[dict] = []
+    if not fixture_metadata.get("rights") and not fixture_metadata.get("rights_attestation"):
+        _append_hard_failure(
+            hard_failures,
+            HARD_FAIL_MISSING_GOLDEN_FIXTURE_RECORD,
+            "Golden fixture is missing source/license/self-created rights evidence.",
+            path="$.rights_attestation",
+        )
+    if not fixture_metadata.get("rubric_record") and not fixture_metadata.get("manual_rubric"):
+        _append_hard_failure(
+            hard_failures,
+            HARD_FAIL_MISSING_GOLDEN_FIXTURE_RECORD,
+            "Golden fixture is missing manual rubric record.",
+            path="$.rubric_record",
+        )
+    return hard_failures
+
+
 def build_quality_report(arrangement: dict, *, fixture_metadata: dict | None = None) -> dict:
-    """Compatibility wrapper returning the machine-readable quality report dict."""
-    return evaluate_quality(arrangement, fixture_metadata=fixture_metadata).to_dict()
+    hard_failures: list[dict] = []
+    warnings = list(arrangement.get("warnings", []))
+
+    for error in validate_arrangement(arrangement):
+        _append_hard_failure(hard_failures, HARD_FAIL_UNPLAYABLE_TAB, error)
+
+    if _has_warning(arrangement, WARNING_UNPLAYABLE_NOTE):
+        _append_hard_failure(
+            hard_failures,
+            HARD_FAIL_UNPLAYABLE_TAB,
+            "At least one note could not be mapped to playable TAB.",
+        )
+
+    _hard_fail_unplayable_positions(arrangement, hard_failures)
+    _hard_fail_low_confidence_without_warning(arrangement, hard_failures)
+
+    if fixture_metadata is not None:
+        hard_failures.extend(validate_golden_fixture_record(fixture_metadata))
+
+    checks = {
+        "schema": not any(failure["code"] == HARD_FAIL_UNPLAYABLE_TAB for failure in hard_failures),
+        "low_confidence_warnings": not any(
+            failure["code"] == HARD_FAIL_LOW_CONFIDENCE_WITHOUT_WARNING for failure in hard_failures
+        ),
+        "golden_fixture_record": not any(
+            failure["code"] == HARD_FAIL_MISSING_GOLDEN_FIXTURE_RECORD for failure in hard_failures
+        ),
+    }
+
+    return {
+        "status": "failed" if hard_failures else ("warning" if warnings else "pass"),
+        "hard_failures": hard_failures,
+        "warnings": warnings,
+        "checks": checks,
+        "summary": {
+            "warning_count": len(warnings),
+            "hard_failure_count": len(hard_failures),
+        },
+    }

@@ -1,0 +1,13 @@
+{
+  "schema_version": "0.1.0",
+  "timebase": {"sample_rate": 44100, "tempo_bpm": 96.0, "beats": [{"time": 0.0, "beat": 1}], "bars": [{"index": 1, "start": 0.0, "end": 2.5}], "time_signature": "4/4"},
+  "source": {"input_type": "local_audio", "input_uri": "fixtures/simple_chords_30_90s.wav", "rights_attestation": "user_provided", "trim": {"start": 0.0, "end": 60.0}, "stems": [{"name": "mix", "path": "audio_normalized.wav", "model": null, "confidence": 1.0, "provenance": {"stage": "audio_preprocess", "input": "local_audio"}}]},
+  "confidence": {"overall": 0.72, "rhythm": 0.8, "chords": 0.7, "notes": 0.65, "fingering": 0.75, "thresholds": {"notes": 0.55, "chords": 0.6, "sections": 0.5, "fingering": 0.65}},
+  "warnings": [],
+  "note_events": [{"id": "n1", "start": 1.25, "end": 1.55, "pitch_midi": 64, "confidence": 0.82, "provenance": {"stage": "pitch_transcription", "stem": "mix"}}],
+  "chord_spans": [{"start": 0.0, "end": 2.5, "label": "G", "confidence": 0.78, "provenance": {"stage": "tonal_chord_analysis"}}],
+  "section_spans": [{"start": 0.0, "end": 16.0, "label": "Verse/Riff A", "confidence": 0.66}],
+  "fretboard": {"tuning": ["E2", "A2", "D3", "G3", "B3", "E4"], "supported_fret_range": {"min": 0, "max": 20}, "capo": 0},
+  "positions": [{"note_id": "n1", "string": 1, "fret": 0, "confidence": 0.78, "playability": "playable"}],
+  "render_hints": {"tab_density": "sketch", "show_rhythm_slashes": true, "show_warnings_inline": true, "preferred_output": "markdown"}
+}

@@ -1,0 +1,7 @@
+{
+  "fixtures": [
+    {"id": "simple_chords_30_90s", "duration_seconds": 45, "rights": "self-made synthetic fixture placeholder", "manual_rubric": {"reviewer": "author", "recognizability": 3, "chord_usability": 3, "tab_playability": 3, "rhythm_readability": 3, "honesty": 4}},
+    {"id": "single_note_riff_30_90s", "duration_seconds": 45, "rights": "self-made synthetic fixture placeholder", "manual_rubric": {"reviewer": "author", "recognizability": 3, "chord_usability": 3, "tab_playability": 3, "rhythm_readability": 3, "honesty": 4}},
+    {"id": "single_note_lead_30_90s", "duration_seconds": 45, "rights": "self-made synthetic fixture placeholder", "manual_rubric": {"reviewer": "author", "recognizability": 3, "chord_usability": 3, "tab_playability": 3, "rhythm_readability": 3, "honesty": 4}}
+  ]
+}
