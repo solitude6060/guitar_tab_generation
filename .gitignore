@@ -3,3 +3,6 @@
 .omx/logs/
 .omx/metrics.json
 .omx/tmux-hook.json
+__pycache__/
+*.py[cod]
+.pytest_cache/

@@ -158,3 +158,8 @@ def evaluate_quality(arrangement: dict, *, fixture_metadata: dict | None = None)
         schema_errors=schema_errors,
         summary=summary,
     )
+
+
+def build_quality_report(arrangement: dict, *, fixture_metadata: dict | None = None) -> dict:
+    """Compatibility wrapper returning the machine-readable quality report dict."""
+    return evaluate_quality(arrangement, fixture_metadata=fixture_metadata).to_dict()

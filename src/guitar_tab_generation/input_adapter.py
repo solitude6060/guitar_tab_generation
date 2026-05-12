@@ -14,6 +14,14 @@ class InputPolicyError(ValueError):
     """Raised when an input violates MVP input policy."""
 
 
+class InputError(ValueError):
+    """Raised when local audio input cannot be resolved."""
+
+
+class PolicyGateError(InputPolicyError):
+    """Raised when URL input hits the MVP policy gate."""
+
+
 @dataclass(frozen=True)
 class AudioInput:
     input_type: str
@@ -21,6 +29,18 @@ class AudioInput:
     rights_attestation: str
     duration_seconds: float | None
     trim: dict[str, float]
+
+    @property
+    def path(self) -> Path:
+        return Path(self.input_uri)
+
+    @property
+    def trim_start(self) -> float:
+        return float(self.trim["start"])
+
+    @property
+    def trim_end(self) -> float:
+        return float(self.trim["end"])
 
 
 def is_url(value: str) -> bool:
@@ -81,3 +101,45 @@ def validate_local_audio(
         duration_seconds=duration,
         trim={"start": start, "end": end},
     )
+
+
+def policy_gate_message(url: str) -> str:
+    """Return the user-facing URL policy gate message without downloading anything."""
+    return policy_gate_for_url(url)["message"]
+
+
+def resolve_local_audio(
+    input_uri: str | Path,
+    *,
+    trim_start: float | None = None,
+    trim_end: float | None = None,
+    rights_attestation: str = "user_provided",
+) -> AudioInput:
+    """Resolve a legal local audio input; URL inputs are blocked by policy."""
+    if is_url(str(input_uri)):
+        raise PolicyGateError(policy_gate_message(str(input_uri)))
+    try:
+        return validate_local_audio(
+            input_uri,
+            trim_start=trim_start,
+            trim_end=trim_end,
+            rights_attestation=rights_attestation,
+        )
+    except FileNotFoundError as exc:
+        raise InputError(str(exc)) from exc
+    except InputPolicyError:
+        raise
+
+
+def load_fixture_metadata(audio_path: Path) -> dict | None:
+    """Load optional sidecar fixture metadata for deterministic MVP tests.
+
+    Looks for <audio>.fixture.json next to the audio file. Missing metadata is allowed
+    for ad-hoc local audio, but golden fixtures require it through the quality gate.
+    """
+    import json
+
+    sidecar = audio_path.with_suffix(audio_path.suffix + ".fixture.json")
+    if not sidecar.exists():
+        return None
+    return json.loads(sidecar.read_text(encoding="utf-8"))
