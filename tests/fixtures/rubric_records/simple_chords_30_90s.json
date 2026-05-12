@@ -1,0 +1,15 @@
+{
+  "fixture_id": "simple_chords_30_90s",
+  "reviewer": "author-placeholder",
+  "record_type": "phase0_baseline",
+  "scores": {
+    "recognizability": 3,
+    "chord_usability": 3,
+    "tab_playability": 3,
+    "rhythm_readability": 3,
+    "honesty": 5
+  },
+  "average_score": 3.4,
+  "hard_failures": [],
+  "notes": "Placeholder manual rubric baseline for the synthetic fixture scaffold; replace with a real listening/play-through record when audio is added."
+}

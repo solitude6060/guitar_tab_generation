@@ -1,0 +1,11 @@
+{
+  "input_type": "url",
+  "status": "blocked",
+  "download_attempted": false,
+  "warning": {
+    "code": "URL_POLICY_GATE",
+    "severity": "warning",
+    "message": "MVP URL input is disabled; provide a legal local audio file and rights attestation."
+  },
+  "message": "URL input is disabled for the MVP. Use local audio only when you have rights to process it."
+}

@@ -1,0 +1,14 @@
+{
+  "status": "warning",
+  "warnings": [
+    {"code": "LOW_NOTE_CONFIDENCE", "severity": "warning", "message": "Lead line is approximate", "time_range": [12.0, 18.5]}
+  ],
+  "hard_failures": [],
+  "checks": {
+    "golden_fixture_present": true,
+    "manual_rubric_present": true,
+    "low_confidence_warned": true,
+    "tab_positions_playable": true,
+    "url_policy_blocked": true
+  }
+}
