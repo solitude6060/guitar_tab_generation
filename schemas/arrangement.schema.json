@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Guitar Tab Generation MVP arrangement",
+  "type": "object",
+  "required": ["schema_version", "timebase", "source", "confidence", "warnings", "note_events", "chord_spans", "section_spans", "fretboard", "positions", "render_hints"],
+  "properties": {
+    "schema_version": {"const": "0.1.0"},
+    "timebase": {"type": "object"},
+    "source": {"type": "object"},
+    "confidence": {"type": "object"},
+    "warnings": {"type": "array"},
+    "note_events": {"type": "array"},
+    "chord_spans": {"type": "array"},
+    "section_spans": {"type": "array"},
+    "fretboard": {"type": "object"},
+    "positions": {"type": "array"},
+    "render_hints": {"type": "object"}
+  }
+}
