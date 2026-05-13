@@ -11,6 +11,7 @@
 ## Non-negotiables
 
 - 繁體中文回覆使用者。
+- 給使用者看的文件必須有繁中版本。
 - 規格、測試、實作、驗證、code review、merge flow 缺一不可。
 - 不開任意 URL / YouTube 下載。
 - 不隱藏低信心結果；warning 必須保留到 viewer / tutorial / export。
