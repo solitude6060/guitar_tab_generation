@@ -1,7 +1,7 @@
 # P5 Research Plan：Demo / Tutorial / DAW Export
 
-日期：2026-05-13  
-狀態：Deferred research  
+日期：2026-05-13
+狀態：Research completed (2026-05-13)
 建議分支：`research/demo-tutorial-daw`
 
 ## 目標
@@ -22,3 +22,11 @@
 
 - 不在 research phase 直接做大型 UI。
 - 不承諾 Logic/GarageBand 完整 session export。
+
+## Executable Coverage
+
+已新增並通過：
+
+- `docs/plans/p5-demo-tutorial-daw-research-report-20260513.md`
+- `docs/adr/20260513-demo-tutorial-daw-sequencing.md`
+- `tests/test_research_planning_contract.py`
