@@ -38,3 +38,14 @@ def test_p8_interface_mvp_is_planned_in_roadmap() -> None:
         assert required in plan_text
     assert "P8 | Interface MVP" in backlog.read_text(encoding="utf-8")
     assert "P8 Interface MVP" in execution.read_text(encoding="utf-8")
+
+
+def test_user_facing_review_has_traditional_chinese_version() -> None:
+    agents = Path("AGENTS.md")
+    review_zh = Path("docs/reviews/p7-pr-code-review-20260513.zh-TW.md")
+
+    assert "所有給使用者看的文件都必須提供繁中版本" in agents.read_text(encoding="utf-8")
+    assert review_zh.exists()
+    text = review_zh.read_text(encoding="utf-8")
+    for required in ["程式碼審查", "結論", "驗證證據", "合併建議"]:
+        assert required in text
