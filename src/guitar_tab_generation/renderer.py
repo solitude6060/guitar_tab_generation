@@ -13,6 +13,8 @@ def render_markdown_tab(arrangement: dict, quality_report: dict) -> str:
         f"- Schema: {arrangement['schema_version']}",
         f"- Tempo: {arrangement['timebase']['tempo_bpm']} BPM",
         f"- Time signature: {arrangement['timebase']['time_signature']}",
+        f"- Overall confidence: {arrangement['confidence'].get('overall', 0.0):.2f}",
+        f"- Notes/chords/fingering confidence: {arrangement['confidence'].get('notes', 0.0):.2f} / {arrangement['confidence'].get('chords', 0.0):.2f} / {arrangement['confidence'].get('fingering', 0.0):.2f}",
         f"- Source: {arrangement['source']['input_uri']}",
         "",
         "## Sections",
@@ -26,10 +28,19 @@ def render_markdown_tab(arrangement: dict, quality_report: dict) -> str:
     by_note = {event["id"]: event for event in arrangement.get("note_events", [])}
     for position in arrangement.get("positions", []):
         event = by_note.get(position["note_id"], {})
+        playability = str(position.get("playability", "playable"))
+        if playability == "unplayable":
+            lines.append(
+                f"{event.get('start', 0):6.2f}s  {event.get('pitch_name', '?'):>3}  "
+                "[UNPLAYABLE omitted]  "
+                f"confidence {position['confidence']:.2f}"
+            )
+            continue
+        suffix = "" if playability == "playable" else f"  [{playability}]"
         lines.append(
             f"{event.get('start', 0):6.2f}s  {event.get('pitch_name', '?'):>3}  "
             f"string {position['string']} fret {position['fret']}  "
-            f"confidence {position['confidence']:.2f}"
+            f"confidence {position['confidence']:.2f}{suffix}"
         )
     lines.extend(["```", "", "## Warnings"])
     if arrangement.get("warnings"):

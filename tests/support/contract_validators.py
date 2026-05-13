@@ -137,7 +137,7 @@ def _assert_note_events(artifact: dict[str, Any]) -> None:
             raise ContractError(f"note_events[{index}] must have increasing second offsets")
         if not 0 <= note["confidence"] <= 1:
             raise ContractError(f"note_events[{index}].confidence must be between 0 and 1")
-        require_keys(note["provenance"], ["stage", "stem"], f"note_events[{index}].provenance")
+        require_keys(note["provenance"], ["stage", "stem", "backend"], f"note_events[{index}].provenance")
 
 
 def _assert_chord_spans(artifact: dict[str, Any]) -> None:
@@ -145,14 +145,15 @@ def _assert_chord_spans(artifact: dict[str, Any]) -> None:
         require_keys(chord, ["start", "end", "label", "confidence", "provenance"], f"chord_spans[{index}]")
         if chord["end"] <= chord["start"] or chord["start"] < 0:
             raise ContractError(f"chord_spans[{index}] must have increasing second offsets")
-        require_keys(chord["provenance"], ["stage", "stem"], f"chord_spans[{index}].provenance")
+        require_keys(chord["provenance"], ["stage", "stem", "backend"], f"chord_spans[{index}].provenance")
 
 
 def _assert_section_spans(artifact: dict[str, Any]) -> None:
     for index, section in enumerate(artifact["section_spans"]):
-        require_keys(section, ["start", "end", "label", "confidence"], f"section_spans[{index}]")
+        require_keys(section, ["start", "end", "label", "confidence", "provenance"], f"section_spans[{index}]")
         if section["end"] <= section["start"] or section["start"] < 0:
             raise ContractError(f"section_spans[{index}] must have increasing second offsets")
+        require_keys(section["provenance"], ["stage", "backend"], f"section_spans[{index}].provenance")
 
 
 def _assert_positions(artifact: dict[str, Any]) -> None:
@@ -197,8 +198,8 @@ def _assert_low_confidence_has_warnings(artifact: dict[str, Any]) -> None:
 
 def assert_quality_report_contract(report: dict[str, Any], arrangement: dict[str, Any] | None = None) -> None:
     require_keys(report, ["status", "warnings", "hard_failures", "checks"], "quality_report.json")
-    if report["status"] not in {"pass", "warning", "failed"}:
-        raise ContractError("quality_report.status must be pass/warning/failed")
+    if report["status"] not in {"pass", "passed", "warning", "failed"}:
+        raise ContractError("quality_report.status must be pass/passed/warning/failed")
     assert_warning_shape(report)
     if report["status"] == "failed" and not report["hard_failures"]:
         raise ContractError("failed quality report must include hard_failures")

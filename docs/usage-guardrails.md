@@ -76,4 +76,4 @@ Before marking a change complete:
 - [ ] Low-confidence values produce warnings.
 - [ ] Unplayable TAB cannot be emitted as normal TAB.
 - [ ] `tab.md`, `arrangement.json`, and `quality_report.json` warnings agree.
-- [ ] `python3 -m pytest` passes, or any collection/runtime limitation is documented.
+- [ ] `uv run pytest -q` passes, or any collection/runtime limitation is documented.

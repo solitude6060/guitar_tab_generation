@@ -76,4 +76,4 @@ Phase 0 必須建立三個合法 fixture，才能宣稱 e2e MVP 通過：
 - [ ] 低信心值會產生 warnings。
 - [ ] 不可彈 TAB 不會被輸出成正常 TAB。
 - [ ] `tab.md`、`arrangement.json`、`quality_report.json` 的 warnings 一致。
-- [ ] `PYTHONPATH=src python3 -m pytest -q` 通過，或清楚記錄任何測試限制。
+- [ ] `uv run pytest -q` 通過，或清楚記錄任何測試限制。
