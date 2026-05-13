@@ -5,15 +5,13 @@ from pathlib import Path
 import json
 
 from .audio_preprocess import normalize_audio
+from .backends import AnalysisBackend, resolve_backend
 from .contracts import CONFIDENCE_THRESHOLDS, WARNING_LOW_FINGERING_CONFIDENCE, WARNING_LOW_SECTION_CONFIDENCE
 from .guitar_arranger import arrange_notes
 from .input_adapter import load_fixture_metadata, resolve_local_audio
-from .pitch_transcription import transcribe_notes
 from .quality_reporter import build_quality_report
 from .renderer import write_outputs
-from .rhythm_analysis import analyze_rhythm
 from .schema import base_arrangement
-from .tonal_chord_analysis import analyze_chords
 
 
 def _average(values: list[float]) -> float:
@@ -26,11 +24,13 @@ def transcribe_to_tab(
     *,
     trim_start: float | None = None,
     trim_end: float | None = None,
+    backend: str | AnalysisBackend | None = None,
 ) -> tuple[dict, dict]:
+    analysis_backend = resolve_backend(backend)
     audio_input = resolve_local_audio(input_uri, trim_start=trim_start, trim_end=trim_end)
     fixture_metadata = load_fixture_metadata(audio_input.path)
     normalized = normalize_audio(audio_input, out_dir)
-    rhythm = analyze_rhythm(audio_input.duration_seconds, fixture_metadata)
+    rhythm = analysis_backend.safe_analyze_rhythm(audio_input.duration_seconds, fixture_metadata)
 
     source = {
         "input_type": audio_input.input_type,
@@ -53,28 +53,18 @@ def transcribe_to_tab(
         duration_seconds=audio_input.duration_seconds,
         source=source,
     )
+    arrangement["timebase"]["provenance"] = rhythm["provenance"]
 
-    chords, chord_warnings = analyze_chords(audio_input.duration_seconds, fixture_metadata)
-    notes, note_warnings = transcribe_notes(audio_input.duration_seconds, fixture_metadata)
+    chords, chord_warnings = analysis_backend.safe_analyze_chords(audio_input.duration_seconds, fixture_metadata)
+    notes, note_warnings = analysis_backend.safe_transcribe_notes(audio_input.duration_seconds, fixture_metadata)
     positions, playability_warnings, fingering_confidence = arrange_notes(notes)
-    sections = (fixture_metadata or {}).get("section_spans") or [
-        {"start": 0.0, "end": audio_input.duration_seconds, "label": "Main sketch", "confidence": 0.66}
-    ]
-    sections = [
-        {
-            "start": float(section["start"]),
-            "end": float(section["end"]),
-            "label": str(section["label"]),
-            "confidence": float(section.get("confidence", 0.66)),
-        }
-        for section in sections
-    ]
+    sections, section_warnings = analysis_backend.safe_detect_sections(audio_input.duration_seconds, fixture_metadata)
 
     arrangement["chord_spans"] = chords
     arrangement["note_events"] = notes
     arrangement["positions"] = positions
     arrangement["section_spans"] = sections
-    arrangement["warnings"].extend(chord_warnings + note_warnings + playability_warnings)
+    arrangement["warnings"].extend(chord_warnings + note_warnings + section_warnings + playability_warnings)
 
     section_confidence = _average([section["confidence"] for section in sections])
     if section_confidence < CONFIDENCE_THRESHOLDS["sections"]:

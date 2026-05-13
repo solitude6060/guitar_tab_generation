@@ -52,7 +52,7 @@ uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --out 
 建議透過 uv 執行 console script：
 
 ```bash
-uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --out out/simple_chords
+uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --backend fixture --out out/simple_chords
 ```
 
 若來源檔較長，請明確指定 30–90 秒 trim：

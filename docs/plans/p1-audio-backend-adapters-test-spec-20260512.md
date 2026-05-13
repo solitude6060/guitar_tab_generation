@@ -48,3 +48,24 @@ uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --out 
 3. Provenance 缺 backend/stage。
 4. Optional backend 缺 dependency 時出現未處理 stack trace。
 5. URL policy gate 行為被改變。
+
+## 6. Executable Coverage（2026-05-13）
+
+已新增並通過：
+
+- `tests/unit/test_backend_contracts.py`
+  - provenance 必須包含 `stage` 與 `backend`。
+  - fixture backend 輸出 backend provenance。
+  - backend 例外會包成 `BackendExecutionError`。
+- `tests/integration/test_pipeline_backend_selection.py`
+  - default pipeline 使用 fixture backend。
+  - unknown backend 清楚失敗。
+  - optional real backend placeholder 清楚拒絕。
+
+驗證指令：
+
+```bash
+uv run pytest -q
+uv run guitar-tab-generation --help
+uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --out /tmp/guitar-tab-p1-simple
+```

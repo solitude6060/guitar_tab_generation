@@ -1,7 +1,7 @@
 # P1 PRD：Audio Backend Adapter 架構
 
-日期：2026-05-12  
-狀態：Planned  
+日期：2026-05-12
+狀態：Implemented (2026-05-13)
 建議分支：`feature/audio-backend-adapters`
 
 ## 1. 背景
@@ -55,9 +55,16 @@
 
 ## 6. 風險與緩解
 
-- 風險：過早抽象造成複雜度。  
+- 風險：過早抽象造成複雜度。
   緩解：只抽目前 pipeline 已有的 rhythm/chord/note/section 邊界。
-- 風險：真實 backend 非 deterministic。  
+- 風險：真實 backend 非 deterministic。
   緩解：fixture backend 永遠保留為測試主路徑。
-- 風險：新增 dependency 破壞安裝。  
+- 風險：新增 dependency 破壞安裝。
   緩解：所有 heavy backend 都 optional/import guarded，新增 dependency 需 ADR。
+
+## 7. Implementation Notes
+
+- 新增 `src/guitar_tab_generation/backends.py`，提供 `AnalysisBackend` protocol、`FixtureAnalysisBackend`、`resolve_backend()` 與 `BackendExecutionError`。
+- `transcribe_to_tab(..., backend=...)` 預設使用 fixture backend，保留 deterministic MVP path。
+- CLI 新增 `--backend`，目前預設/可用 backend 為 `fixture`；`real` / `basic-pitch` / `librosa` 先回傳明確 optional backend 錯誤。
+- `arrangement.json` 的 rhythm/note/chord/section provenance 會包含 `backend`，避免未來模型輸出不可追溯。

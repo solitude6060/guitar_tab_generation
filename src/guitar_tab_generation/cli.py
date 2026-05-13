@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 import sys
 
+from .backends import BackendExecutionError
 from .input_adapter import InputError, PolicyGateError, policy_gate_message
 from .pipeline import transcribe_to_tab
 
@@ -17,6 +18,7 @@ def build_parser() -> argparse.ArgumentParser:
     transcribe.add_argument("--out", required=True, type=Path)
     transcribe.add_argument("--trim-start", type=float, default=None)
     transcribe.add_argument("--trim-end", type=float, default=None)
+    transcribe.add_argument("--backend", default="fixture", help="Analysis backend to use; MVP default is fixture.")
     transcribe.add_argument(
         "--i-own-rights",
         action="store_true",
@@ -35,6 +37,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.out,
                 trim_start=args.trim_start,
                 trim_end=args.trim_end,
+                backend=args.backend,
             )
         except PolicyGateError as exc:
             args.out.mkdir(parents=True, exist_ok=True)
@@ -43,6 +46,9 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         except InputError as exc:
             print(f"Input error: {exc}", file=sys.stderr)
+            return 1
+        except BackendExecutionError as exc:
+            print(f"Backend error: {exc}", file=sys.stderr)
             return 1
         print(f"Wrote {args.out / 'tab.md'}")
         return 0 if quality_report["status"] == "passed" else 3
