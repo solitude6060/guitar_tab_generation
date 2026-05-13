@@ -9,6 +9,7 @@ from .artifact_viewer import ArtifactViewerError, write_artifact_viewer
 from .backends import BackendExecutionError
 from .input_adapter import InputError, PolicyGateError
 from .pipeline import transcribe_to_tab
+from .practice_tutorial import write_practice_tutorial
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -28,6 +29,11 @@ def build_parser() -> argparse.ArgumentParser:
     view = subparsers.add_parser("view", help="Render a Markdown summary from an existing artifact directory")
     view.add_argument("artifact_dir", type=Path)
     view.add_argument("--out", type=Path, default=None, help="Output Markdown path; defaults to <artifact_dir>/viewer.md")
+    tutorial = subparsers.add_parser("tutorial", help="Render a practice tutorial from an existing artifact directory")
+    tutorial.add_argument("artifact_dir", type=Path)
+    tutorial.add_argument(
+        "--out", type=Path, default=None, help="Output Markdown path; defaults to <artifact_dir>/tutorial.md"
+    )
     return parser
 
 
@@ -61,6 +67,14 @@ def main(argv: list[str] | None = None) -> int:
             written = write_artifact_viewer(args.artifact_dir, args.out)
         except ArtifactViewerError as exc:
             print(f"Artifact viewer error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {written}")
+        return 0
+    if args.command == "tutorial":
+        try:
+            written = write_practice_tutorial(args.artifact_dir, args.out)
+        except ArtifactViewerError as exc:
+            print(f"Practice tutorial error: {exc}", file=sys.stderr)
             return 1
         print(f"Wrote {written}")
         return 0
