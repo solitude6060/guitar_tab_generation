@@ -43,6 +43,7 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 | P3 Playability + Renderer Quality | `feature/playability-renderer-quality` | 提升可彈性與 TAB 可讀性 | 不可彈不渲染；TAB 有段落/節奏/warning |
 | P4 Legal URL Path ADR | `plan/legal-url-path-adr` | 規劃合法 URL future path，不開下載 | ADR + tests 保持 arbitrary URL blocked |
 | P5 Demo / Tutorial / DAW Research | `research/demo-tutorial-daw` | 規劃 UI、教學、DAW export 研究與取捨 | research report + ADR candidates |
+| P6 Artifact Viewer Demo | `feature/artifact-viewer-demo` | 讀取既有 artifacts 產生展示/練習摘要 Markdown | 三個 golden fixtures 可產生 `viewer.md` |
 
 ## 3. Recommended Ralph commands
 
@@ -81,3 +82,10 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 - Ralph completion audit 有 JSON evidence。
 
 後才可宣告該 phase 完成。
+
+
+### P6
+
+```text
+使用 Ralph 完成 P6：依照 docs/plans/p6-artifact-viewer-demo-prd-20260513.md 和 docs/plans/p6-artifact-viewer-demo-test-spec-20260513.md，新增零重依賴 CLI artifact viewer；嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
+```

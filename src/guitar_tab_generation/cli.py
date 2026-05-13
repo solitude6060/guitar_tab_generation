@@ -5,8 +5,9 @@ import argparse
 from pathlib import Path
 import sys
 
+from .artifact_viewer import ArtifactViewerError, write_artifact_viewer
 from .backends import BackendExecutionError
-from .input_adapter import InputError, PolicyGateError, policy_gate_message
+from .input_adapter import InputError, PolicyGateError
 from .pipeline import transcribe_to_tab
 
 
@@ -24,6 +25,9 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Reserved for future gated URL support; arbitrary URL download remains disabled in MVP.",
     )
+    view = subparsers.add_parser("view", help="Render a Markdown summary from an existing artifact directory")
+    view.add_argument("artifact_dir", type=Path)
+    view.add_argument("--out", type=Path, default=None, help="Output Markdown path; defaults to <artifact_dir>/viewer.md")
     return parser
 
 
@@ -52,6 +56,14 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(f"Wrote {args.out / 'tab.md'}")
         return 0 if quality_report["status"] == "passed" else 3
+    if args.command == "view":
+        try:
+            written = write_artifact_viewer(args.artifact_dir, args.out)
+        except ArtifactViewerError as exc:
+            print(f"Artifact viewer error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {written}")
+        return 0
     parser.error("unknown command")
     return 1
 
