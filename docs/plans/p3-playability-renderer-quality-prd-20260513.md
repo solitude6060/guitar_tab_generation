@@ -1,7 +1,7 @@
 # P3 PRD：Playability + Renderer Quality
 
-日期：2026-05-13  
-狀態：Planned  
+日期：2026-05-13
+狀態：Implemented (2026-05-13)
 建議分支：`feature/playability-renderer-quality`
 
 ## 1. 背景
@@ -37,3 +37,10 @@ P1/P2 建立可替換 backend 與 E2E artifact contract 後，下一個核心價
 - P3 tests 通過。
 - 三個 fixtures 的 `tab.md` 人類可讀，且不缺 warning/degraded section。
 - 所有 positions 仍符合 string 1–6、fret 0–20。
+
+## 6. Implementation Notes
+
+- `guitar_arranger` 現在會依前一個 position 選擇較近手位，而不是永遠選最低 fret。
+- 高密度 note events 會降級為最多 32 個 sketch TAB notes，並輸出 `DENSE_NOTE_SKETCH_DEGRADED` warning。
+- 低信心 fingering 使用 `degraded` playability，維持 schema allowed values。
+- `renderer` 補 overall/notes/chords/fingering confidence metadata，並避免把 `unplayable` position 渲染成正常 TAB。
