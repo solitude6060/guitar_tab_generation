@@ -132,14 +132,19 @@ def resolve_local_audio(
 
 
 def load_fixture_metadata(audio_path: Path) -> dict | None:
-    """Load optional sidecar fixture metadata for deterministic MVP tests.
+    """Load optional fixture metadata for deterministic MVP tests.
 
-    Looks for <audio>.fixture.json next to the audio file. Missing metadata is allowed
-    for ad-hoc local audio, but golden fixtures require it through the quality gate.
+    Lookup order keeps ad-hoc sidecars supported while allowing the repository's
+    golden fixtures to keep metadata/rubric records in ``fixtures/metadata``.
+    Missing metadata remains allowed for non-golden local audio.
     """
     import json
 
-    sidecar = audio_path.with_suffix(audio_path.suffix + ".fixture.json")
-    if not sidecar.exists():
-        return None
-    return json.loads(sidecar.read_text(encoding="utf-8"))
+    candidates = [audio_path.with_suffix(audio_path.suffix + ".fixture.json")]
+    if audio_path.parent.name == "fixtures":
+        candidates.append(audio_path.parent / "metadata" / f"{audio_path.stem}.json")
+
+    for candidate in candidates:
+        if candidate.exists():
+            return json.loads(candidate.read_text(encoding="utf-8"))
+    return None

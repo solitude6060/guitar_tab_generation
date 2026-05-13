@@ -1,7 +1,7 @@
 # P2 PRD：CLI E2E Artifact Contract
 
-日期：2026-05-13  
-狀態：Ready for execution  
+日期：2026-05-13
+狀態：Implemented (2026-05-13)
 建議分支：`feature/cli-e2e-artifact-contract`
 
 ## 1. 背景
@@ -39,3 +39,10 @@
 - 新增 integration/e2e tests 覆蓋三個 fixtures。
 - 每個 fixture 的 artifact files 都存在且 JSON 可 parse。
 - `tab.md` 包含 metadata、sections/chords/TAB、warning section 或明確無 warning。
+
+## 6. Implementation Notes
+
+- 新增 `tests/e2e/test_cli_fixture_artifacts.py`，以 CLI main 對三個 golden fixtures 跑完整 transcribe。
+- `input_adapter.load_fixture_metadata()` 現支援 `fixtures/metadata/<fixture_id>.json`，讓 golden fixture metadata/rubric 可被 pipeline 與 quality gate 使用。
+- E2E 測試驗證七個 artifact files、`arrangement.json` contract、`quality_report.json` contract、中間 JSON 與 arrangement 一致、`tab.md` 必備章節與 warning 狀態。
+- URL policy gate 測試確認 URL path 只產生 `policy_gate.txt`，不產生媒體/轉錄 artifact。

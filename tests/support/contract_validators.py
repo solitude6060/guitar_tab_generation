@@ -198,8 +198,8 @@ def _assert_low_confidence_has_warnings(artifact: dict[str, Any]) -> None:
 
 def assert_quality_report_contract(report: dict[str, Any], arrangement: dict[str, Any] | None = None) -> None:
     require_keys(report, ["status", "warnings", "hard_failures", "checks"], "quality_report.json")
-    if report["status"] not in {"pass", "warning", "failed"}:
-        raise ContractError("quality_report.status must be pass/warning/failed")
+    if report["status"] not in {"pass", "passed", "warning", "failed"}:
+        raise ContractError("quality_report.status must be pass/passed/warning/failed")
     assert_warning_shape(report)
     if report["status"] == "failed" and not report["hard_failures"]:
         raise ContractError("failed quality report must include hard_failures")

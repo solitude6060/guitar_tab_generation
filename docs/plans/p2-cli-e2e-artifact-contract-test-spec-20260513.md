@@ -1,6 +1,6 @@
 # P2 Test Spec：CLI E2E Artifact Contract
 
-日期：2026-05-13  
+日期：2026-05-13
 對應 PRD：`docs/plans/p2-cli-e2e-artifact-contract-prd-20260513.md`
 
 ## 1. Red tests
@@ -28,3 +28,22 @@ uv run guitar-tab-generation --help
 - 任一 golden fixture 缺 artifact。
 - warning 在 tab/report/arrangement 不一致。
 - URL path 產生 media artifact。
+
+## 4. Executable Coverage（2026-05-13）
+
+已新增並通過：
+
+- `tests/e2e/test_cli_fixture_artifacts.py`
+  - 三個 golden fixtures 端到端 CLI artifact contract。
+  - URL policy gate 無 media artifact。
+
+驗證證據：
+
+```bash
+uv run pytest -q
+# 34 passed
+uv run guitar-tab-generation --help
+uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --backend fixture --out /tmp/guitar-tab-p2-simple
+uv run guitar-tab-generation transcribe fixtures/single_note_riff_30_90s.wav --backend fixture --out /tmp/guitar-tab-p2-riff
+uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --backend fixture --out /tmp/guitar-tab-p2-lead
+```
