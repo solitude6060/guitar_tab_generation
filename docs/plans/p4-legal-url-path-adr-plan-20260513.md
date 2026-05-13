@@ -1,7 +1,7 @@
 # P4 Plan：Legal URL Path ADR
 
-日期：2026-05-13  
-狀態：Deferred planning  
+日期：2026-05-13
+狀態：Implemented (2026-05-13)
 建議分支：`plan/legal-url-path-adr`
 
 ## 目標
@@ -19,3 +19,13 @@
 - 任意 URL 下載 code。
 - `--i-own-rights` 直接繞過 policy gate。
 - 未記錄 audit/provenance。
+
+## Executable Coverage
+
+已新增並通過：
+
+- `docs/adr/20260513-legal-url-input-policy.md`
+- `tests/test_url_policy_guard.py`
+  - `--i-own-rights` 不啟用任意 URL 下載。
+  - URL policy gate 不建立 media/transcription artifacts。
+  - ADR 必須記錄 allowlist、rights attestation、audit log、user-provided audio。
