@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 
 from .artifact_viewer import ArtifactViewerError, write_artifact_viewer
+from .artifact_interface import write_artifact_interface
 from .backends import BackendExecutionError
 from .input_adapter import InputError, PolicyGateError
 from .pipeline import transcribe_to_tab
@@ -33,6 +34,11 @@ def build_parser() -> argparse.ArgumentParser:
     tutorial.add_argument("artifact_dir", type=Path)
     tutorial.add_argument(
         "--out", type=Path, default=None, help="Output Markdown path; defaults to <artifact_dir>/tutorial.md"
+    )
+    interface = subparsers.add_parser("interface", help="Render an offline HTML interface from an artifact directory")
+    interface.add_argument("artifact_dir", type=Path)
+    interface.add_argument(
+        "--out", type=Path, default=None, help="Output HTML path; defaults to <artifact_dir>/interface.html"
     )
     return parser
 
@@ -75,6 +81,14 @@ def main(argv: list[str] | None = None) -> int:
             written = write_practice_tutorial(args.artifact_dir, args.out)
         except ArtifactViewerError as exc:
             print(f"Practice tutorial error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {written}")
+        return 0
+    if args.command == "interface":
+        try:
+            written = write_artifact_interface(args.artifact_dir, args.out)
+        except ArtifactViewerError as exc:
+            print(f"Artifact interface error: {exc}", file=sys.stderr)
             return 1
         print(f"Wrote {written}")
         return 0

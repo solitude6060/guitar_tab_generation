@@ -1,7 +1,7 @@
 # P8 Plan：Interface MVP（好用介面）
 
 日期：2026-05-13
-狀態：Planned after P7
+狀態：Implemented
 建議分支：`feature/interface-mvp`
 
 ## 1. 背景
@@ -48,3 +48,9 @@ guitar-tab-generation interface <artifact_dir> --out interface.html
 - 不做登入、上傳、雲端儲存。
 - 不做即時音訊處理。
 - 不承諾 GarageBand / Logic Pro 專案檔。
+
+
+## 6. Execution specs
+
+- PRD：`docs/plans/p8-interface-mvp-prd-20260513.md`
+- Test spec：`docs/plans/p8-interface-mvp-test-spec-20260513.md`
