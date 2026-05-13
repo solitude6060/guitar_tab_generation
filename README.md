@@ -8,8 +8,8 @@ Local-audio-first MVP for generating practice-usable guitar sketch TAB from lega
 
 This project follows the approved planning artifacts:
 
-- `.omx/plans/prd-guitar-tab-generation-mvp-20260512.md`
-- `.omx/plans/test-spec-guitar-tab-generation-mvp-20260512.md`
+- `docs/plans/prd-guitar-tab-generation-mvp-20260512.md`
+- `docs/plans/test-spec-guitar-tab-generation-mvp-20260512.md`
 
 The MVP is intentionally narrow:
 
@@ -35,20 +35,19 @@ Expected URL behavior:
 The core CLI is expected to expose a local `transcribe` flow. Use either the installed console script or the module form, depending on the environment:
 
 ```bash
-guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --out out/simple_chords
-python3 -m guitar_tab_generation.cli transcribe fixtures/simple_chords_30_90s.wav --out out/simple_chords
+uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --out out/simple_chords
 ```
 
 For a longer legal source file, pass an explicit trim that yields 30–90 seconds:
 
 ```bash
-guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 30 --trim-end 90 --out out/clip
+uv run guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 30 --trim-end 90 --out out/clip
 ```
 
 URL inputs should be used only to verify the policy gate:
 
 ```bash
-guitar-tab-generation transcribe 'https://www.youtube.com/watch?v=example' --out out/url_stub
+uv run guitar-tab-generation transcribe 'https://www.youtube.com/watch?v=example' --out out/url_stub
 # Expected: blocked by URL policy gate; no download or parsed media artifact.
 ```
 
@@ -71,7 +70,7 @@ Optional future outputs such as MusicXML, MIDI, or PDF may be added, but they ar
 Run the available checks from the repository root:
 
 ```bash
-python3 -m pytest
+uv run pytest -q
 python3 -m compileall src tests
 ```
 
@@ -84,3 +83,16 @@ guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --out out/
 ```
 
 See `docs/usage-guardrails.md` for the full usage and acceptance checklist.
+
+
+Development backlog: `docs/plans/backlog-20260512.md`
+
+## Development environment (uv)
+
+This project uses `uv` for the Python development environment.
+
+```bash
+uv sync --group dev
+uv run pytest -q
+uv run guitar-tab-generation --help
+```

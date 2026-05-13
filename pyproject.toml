@@ -8,6 +8,11 @@ version = "0.1.0"
 description = "Local-audio-first MVP skeleton for generating guitar sketch TAB artifacts."
 requires-python = ">=3.11"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
 [project.scripts]
 guitar-tab-generation = "guitar_tab_generation.cli:main"
 
@@ -15,5 +20,4 @@ guitar-tab-generation = "guitar_tab_generation.cli:main"
 where = ["src"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
 testpaths = ["tests"]
