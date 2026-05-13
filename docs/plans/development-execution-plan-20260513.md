@@ -45,6 +45,7 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 | P5 Demo / Tutorial / DAW Research | `research/demo-tutorial-daw` | 規劃 UI、教學、DAW export 研究與取捨 | research report + ADR candidates |
 | P6 Artifact Viewer Demo | `feature/artifact-viewer-demo` | 讀取既有 artifacts 產生展示/練習摘要 Markdown | 三個 golden fixtures 可產生 `viewer.md` |
 | P7 Practice Tutorial Generator | `feature/practice-tutorial-generator` | 從 artifacts 產生練習教學 Markdown | 三個 golden fixtures 可產生 `tutorial.md` |
+| P8 Interface MVP | `feature/interface-mvp` | 產生可離線開啟的 artifact 介面，提升易用性 | 三個 golden fixtures 可產生 `interface.html` |
 
 ## 3. Recommended Ralph commands
 
@@ -96,4 +97,11 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 
 ```text
 使用 Ralph 完成 P7：依照 docs/plans/p7-practice-tutorial-generator-prd-20260513.md 和 docs/plans/p7-practice-tutorial-generator-test-spec-20260513.md，新增零重依賴 CLI practice tutorial generator；嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
+```
+
+
+### P8
+
+```text
+使用 Ralph 完成 P8：依照 docs/plans/p8-interface-mvp-plan-20260513.md，新增 artifact-first interface；UI 不重寫 pipeline、不下載 URL；嚴格 SDD/TDD/git flow，用 uv。
 ```
