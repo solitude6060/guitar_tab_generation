@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 import sys
 
+from .ai_runtime import build_resource_plan, collect_ai_runtime_status, format_runtime_status_markdown
 from .artifact_viewer import ArtifactViewerError, write_artifact_viewer
 from .artifact_interface import write_artifact_interface
 from .backends import BackendExecutionError
@@ -45,6 +46,9 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("artifact_dir", type=Path)
     export.add_argument("--format", choices=["musicxml", "midi"], required=True)
     export.add_argument("--out", type=Path, default=None, help="Output path; defaults to score.musicxml or score.mid")
+    doctor_ai = subparsers.add_parser("doctor-ai", help="Inspect local AI runtime readiness")
+    doctor_ai.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    subparsers.add_parser("ai-resources", help="Print the local 4090 AI resource plan with MiniMax backup policy")
     return parser
 
 
@@ -104,6 +108,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Export error: {exc}", file=sys.stderr)
             return 1
         print(f"Wrote {written}")
+        return 0
+    if args.command == "doctor-ai":
+        status = collect_ai_runtime_status()
+        if args.json:
+            import json
+
+            print(json.dumps(status, ensure_ascii=False, indent=2))
+        else:
+            print(format_runtime_status_markdown(status))
+        return 0
+    if args.command == "ai-resources":
+        print(build_resource_plan())
         return 0
     parser.error("unknown command")
     return 1
