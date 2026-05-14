@@ -16,6 +16,8 @@ def render_markdown_tab(arrangement: dict, quality_report: dict) -> str:
         f"- Overall confidence: {arrangement['confidence'].get('overall', 0.0):.2f}",
         f"- Notes/chords/fingering confidence: {arrangement['confidence'].get('notes', 0.0):.2f} / {arrangement['confidence'].get('chords', 0.0):.2f} / {arrangement['confidence'].get('fingering', 0.0):.2f}",
         f"- Source: {arrangement['source']['input_uri']}",
+        f"- Duration class: {arrangement['source'].get('duration_class', 'clip')}",
+        f"- Processing mode: {arrangement['source'].get('processing_plan', {}).get('mode', 'single_pass_clip')}",
         "",
         "## Sections",
     ]
