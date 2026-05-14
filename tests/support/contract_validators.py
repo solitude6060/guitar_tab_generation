@@ -100,8 +100,18 @@ def _assert_source(source: dict[str, Any]) -> None:
         raise ContractError("MVP arrangement source must be local_audio")
     require_keys(source["trim"], ["start", "end"], "source.trim")
     duration = source["trim"]["end"] - source["trim"]["start"]
-    if not 30 <= duration <= 90:
-        raise ContractError("MVP golden fixture duration must be 30-90 seconds")
+    duration_class = source.get("duration_class", "clip")
+    if duration_class == "clip":
+        if not 30 <= duration <= 90:
+            raise ContractError("MVP golden fixture duration must be 30-90 seconds")
+    elif duration_class == "full_song":
+        if not 180 <= duration <= 480:
+            raise ContractError("full-song fixture duration must be 180-480 seconds")
+        require_keys(source, ["source_duration_seconds", "processing_plan"], "source")
+        if source["processing_plan"].get("mode") != "chunked_full_song":
+            raise ContractError("full-song source must declare chunked_full_song processing_plan")
+    else:
+        raise ContractError("source.duration_class must be clip or full_song")
     if not source["stems"]:
         raise ContractError("source.stems must include at least the normalized mix stem")
     for index, stem in enumerate(source["stems"]):

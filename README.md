@@ -2,7 +2,7 @@
 
 繁體中文文件：[`README.zh-TW.md`](README.zh-TW.md)；使用規範：[`docs/usage-guardrails.zh-TW.md`](docs/usage-guardrails.zh-TW.md)。
 
-Local-audio-first MVP for generating practice-usable guitar sketch TAB from legally provided 30–90 second audio clips.
+Local-audio-first MVP for generating practice-usable guitar sketch TAB from legally provided 30–90 second clips and required 3–8 minute full-song inputs.
 
 ## MVP scope
 
@@ -14,10 +14,10 @@ This project follows the approved planning artifacts:
 The MVP is intentionally narrow:
 
 - **Input:** local audio files that the user owns, is authorized to use, or created.
-- **Duration:** 30–90 second clips, or an explicit trim range that produces a 30–90 second clip.
+- **Duration:** 30–90 second clips for golden fixtures, plus required 3–8 minute full-song inputs（180–480 seconds）.
 - **Output:** `tab.md`, `arrangement.json`, and `quality_report.json`.
 - **Guitar scope:** standard tuning EADGBE, string 1–6, fret 0–20.
-- **Non-goals:** arbitrary YouTube downloads, alternate tunings, required PDF export, DAW export, full teaching lessons, complete songs, and note-perfect/original-fingering guarantees.
+- **Non-goals:** arbitrary YouTube downloads, alternate tunings, required PDF export, proprietary DAW session export, full teaching lessons, and note-perfect/original-fingering guarantees.
 
 ## Input policy guardrail
 
@@ -38,10 +38,11 @@ The core CLI is expected to expose a local `transcribe` flow. Use either the ins
 uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --out out/simple_chords
 ```
 
-For a longer legal source file, pass an explicit trim that yields 30–90 seconds:
+For a longer legal source file, pass an explicit trim that yields either a 30–90 second clip or a 3–8 minute full song:
 
 ```bash
 uv run guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 30 --trim-end 90 --out out/clip
+uv run guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 0 --trim-end 240 --out out/full_song
 ```
 
 URL inputs should be used only to verify the policy gate:

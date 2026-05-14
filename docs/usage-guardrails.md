@@ -8,7 +8,12 @@ A run is in scope only when the input is a local audio file with a clear rights 
 - licensed/authorized audio, or
 - public-domain audio with a recorded source statement.
 
-Supported MVP suffixes are `.wav`, `.mp3`, `.flac`, and `.m4a`. The accepted clip duration is 30–90 seconds. Longer files must be trimmed explicitly; shorter files do not satisfy the golden-fixture acceptance gate.
+Supported MVP suffixes are `.wav`, `.mp3`, `.flac`, and `.m4a`. Accepted effective durations are:
+
+- 30–90 seconds for deterministic practice clips and golden fixtures.
+- 3–8 minutes（180–480 seconds）for required full-song support.
+
+Middle-length inputs between 90 and 180 seconds are intentionally rejected until a later product mode defines their UX. Longer source files must be trimmed explicitly into one of the supported windows.
 
 ## URL and YouTube policy gate
 
@@ -21,7 +26,7 @@ URL support is a future legal path, not an MVP feature. The MVP behavior is a st
 | Allowlist URL | Not implemented in MVP; defer to post-MVP ADR |
 | Local file path | Continue through local-audio validation |
 
-The policy response should include a stable reason code such as `URL_INPUT_DISABLED` or `URL_POLICY_GATE_DISABLED` and a next action: provide a legal local audio clip.
+The policy response should include a stable reason code such as `URL_INPUT_DISABLED` or `URL_POLICY_GATE_DISABLED` and a next action: provide a legal local audio clip or legal local 3–8 minute full song.
 
 ## Output artifact contract
 
