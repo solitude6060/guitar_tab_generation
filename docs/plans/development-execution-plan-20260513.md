@@ -49,6 +49,7 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 | P9 MIDI / MusicXML Export MVP | `feature/midi-musicxml-export` | 產生 MusicXML / MIDI 通用匯出 | 三個 golden fixtures 可產生 `.musicxml` 與 `.mid` |
 | P10 Local 4090 AI Runtime + MiniMax Backup | `feature/local-ai-runtime-resources` | 本機 4090 AI runtime 檢查與 MiniMax 備援政策 | `doctor-ai` / `ai-resources` 可用 |
 | P11 Full Song Length Support | `feature/full-song-length-support` | 支援合法本機 3–8 分鐘完整歌曲輸入 | 180s/480s accepted；artifact 有 full-song chunk plan |
+| P12 FFmpeg Local Audio Ingest | `feature/ffmpeg-local-audio-ingest` | 支援非 WAV 本機音訊自動長度偵測與 normalized WAV 轉檔 | mp3/flac/m4a use ffprobe + ffmpeg locally |
 
 ## 3. Recommended Ralph commands
 
@@ -114,4 +115,11 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 
 ```text
 使用 Ralph 完成 P11：依照 docs/plans/p11-full-song-length-support-prd-20260514.md 與 docs/plans/p11-full-song-length-support-test-spec-20260514.md，支援合法本機 3–8 分鐘完整歌曲輸入；保留 30–90 秒 fixture clip；artifact 需包含 duration_class 與 processing_plan；嚴格 SDD/TDD/git flow，用 uv。
+```
+
+
+### P12
+
+```text
+使用 Ralph 完成 P12：依照 docs/plans/p12-ffmpeg-local-audio-ingest-prd-20260515.md 與 docs/plans/p12-ffmpeg-local-audio-ingest-test-spec-20260515.md，新增本機 ffprobe/ffmpeg ingest；非 WAV 本機音訊可自動取得長度並轉為 audio_normalized.wav；嚴格 SDD/TDD/git flow，用 uv。
 ```

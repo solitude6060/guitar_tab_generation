@@ -15,6 +15,8 @@ MVP 支援副檔名：`.wav`、`.mp3`、`.flac`、`.m4a`。接受的有效長度
 
 90–180 秒之間的中間長度會先被拒絕，直到後續產品模式定義清楚 UX。更長的來源檔必須明確 trim 到上述其中一個支援區間。
 
+非 WAV 本機音訊需要本機 `ffprobe` 取得長度，並用本機 `ffmpeg` 轉成 `audio_normalized.wav`。若工具缺失，專案必須回報可行動的本機工具錯誤；不得改用下載、上傳或雲端媒體解析。
+
 ## URL / YouTube policy gate
 
 URL 支援是未來合法流程，不是 MVP 功能。MVP 行為是 stub / policy gate：
