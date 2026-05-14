@@ -46,6 +46,7 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 | P6 Artifact Viewer Demo | `feature/artifact-viewer-demo` | 讀取既有 artifacts 產生展示/練習摘要 Markdown | 三個 golden fixtures 可產生 `viewer.md` |
 | P7 Practice Tutorial Generator | `feature/practice-tutorial-generator` | 從 artifacts 產生練習教學 Markdown | 三個 golden fixtures 可產生 `tutorial.md` |
 | P8 Interface MVP | `feature/interface-mvp` | 產生可離線開啟的 artifact 介面，提升易用性 | 三個 golden fixtures 可產生 `interface.html` |
+| P9 MIDI / MusicXML Export MVP | `feature/midi-musicxml-export` | 產生 MusicXML / MIDI 通用匯出 | 三個 golden fixtures 可產生 `.musicxml` 與 `.mid` |
 
 ## 3. Recommended Ralph commands
 
