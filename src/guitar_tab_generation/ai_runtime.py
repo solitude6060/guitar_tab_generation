@@ -100,6 +100,7 @@ def build_resource_plan() -> str:
 
 - 本機優先：RTX 4090 24GB VRAM 是主要推論環境。
 - 離線優先：轉譜、分軌、和弦、教學、匯出都應先嘗試本機完成。
+- 完整歌曲必備：3–8 分鐘（180–480 秒）音訊走 chunked local processing。
 - MiniMax 是備援：只在本機模型不足、需要音樂生成/cover/lyrics 輔助時使用。
 - 不要把 token 寫入 repo；MiniMax token 只允許從環境變數讀取。
 
@@ -126,10 +127,11 @@ def build_resource_plan() -> str:
 
 ## 排程建議
 
-1. Demucs 分軌單獨跑，避免和 32B LLM 搶 VRAM。
-2. Basic Pitch / CREPE 跑完後釋放 GPU。
-3. 本機 LLM 只讀 artifacts：`arrangement.json`、`quality_report.json`、`tab.md`。
-4. MiniMax 只做備援與創作輔助，不當 transcription 真相來源。
+1. 3–8 分鐘完整歌曲先切成 60 秒 chunk、2 秒 overlap，逐段分軌/轉譜。
+2. Demucs 分軌單獨跑，避免和 32B LLM 搶 VRAM。
+3. Basic Pitch / CREPE 跑完後釋放 GPU。
+4. 本機 LLM 只讀 artifacts：`arrangement.json`、`quality_report.json`、`tab.md`。
+5. MiniMax 只做備援與創作輔助，不當 transcription 真相來源。
 """
 
 

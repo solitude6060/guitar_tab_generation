@@ -36,6 +36,9 @@ def transcribe_to_tab(
         "input_type": audio_input.input_type,
         "input_uri": audio_input.input_uri,
         "rights_attestation": audio_input.rights_attestation,
+        "duration_class": audio_input.duration_class,
+        "source_duration_seconds": audio_input.source_duration_seconds,
+        "processing_plan": audio_input.processing_plan,
         "trim": {"start": audio_input.trim_start, "end": audio_input.trim_end},
         "stems": [
             {

@@ -1,6 +1,6 @@
 # 吉他譜生成 MVP
 
-這是一個 **本機音訊優先（local-audio-first）** 的 AI 吉他譜生成 MVP。目標是從使用者合法提供的 30–90 秒音訊片段，產生可練歌使用的吉他 sketch TAB。
+這是一個 **本機音訊優先（local-audio-first）** 的 AI 吉他譜生成 MVP。目標是從使用者合法提供的 30–90 秒音訊片段，以及必備支援的 3–8 分鐘完整歌曲，產生可練歌使用的吉他 sketch TAB。
 
 > English README: `README.md`
 
@@ -14,10 +14,10 @@
 第一版刻意收窄：
 
 - **輸入**：使用者擁有、被授權使用、或自行建立的本機音訊檔。
-- **長度**：30–90 秒片段，或透過 trim 產生 30–90 秒片段。
+- **長度**：30–90 秒片段保留給 golden fixtures；正式完整歌曲必備支援 3–8 分鐘（180–480 秒）。
 - **輸出**：`tab.md`、`arrangement.json`、`quality_report.json`。
 - **吉他範圍**：標準調弦 EADGBE、string 1–6、fret 0–20。
-- **非目標**：任意 YouTube 下載、alternate tuning、PDF 必備輸出、DAW 匯出、完整教學課程、完整歌曲、逐音完美或原演奏者指法保證。
+- **非目標**：任意 YouTube 下載、alternate tuning、PDF 必備輸出、專有 DAW session 直接輸出、完整教學課程、逐音完美或原演奏者指法保證。
 
 ## 輸入政策 guardrail
 
@@ -55,10 +55,11 @@ uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --out 
 uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --backend fixture --out out/simple_chords
 ```
 
-若來源檔較長，請明確指定 30–90 秒 trim：
+若來源檔較長，請明確指定 trim；有效長度需是 30–90 秒片段或 3–8 分鐘完整歌曲：
 
 ```bash
 uv run guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 30 --trim-end 90 --out out/clip
+uv run guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 0 --trim-end 240 --out out/full_song
 ```
 
 URL 只應用於測試 policy gate：

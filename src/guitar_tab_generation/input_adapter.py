@@ -5,9 +5,20 @@ from pathlib import Path
 from urllib.parse import urlparse
 import wave
 
-SUPPORTED_AUDIO_EXTENSIONS = {".wav", ".mp3", ".flac", ".m4a"}
-MIN_DURATION_SECONDS = 30.0
-MAX_DURATION_SECONDS = 90.0
+from .contracts import (
+    FULL_SONG_CHUNK_OVERLAP_SECONDS,
+    FULL_SONG_CHUNK_SECONDS,
+    MAX_CLIP_DURATION_SECONDS,
+    MAX_FULL_SONG_DURATION_SECONDS,
+    MIN_CLIP_DURATION_SECONDS,
+    MIN_FULL_SONG_DURATION_SECONDS,
+    SUPPORTED_AUDIO_EXTENSIONS,
+)
+
+SUPPORTED_DURATION_MESSAGE = (
+    "Supported legal local audio duration is either a 30-90 second practice clip "
+    "or a 3-8 minute full song (180-480 seconds)."
+)
 
 
 class InputPolicyError(ValueError):
@@ -28,6 +39,9 @@ class AudioInput:
     input_uri: str
     rights_attestation: str
     duration_seconds: float | None
+    source_duration_seconds: float | None
+    duration_class: str
+    processing_plan: dict
     trim: dict[str, float]
 
     @property
@@ -56,7 +70,7 @@ def policy_gate_for_url(url: str) -> dict:
         "input_uri": url,
         "message": (
             "MVP is local-audio-first: arbitrary YouTube/URL download or parsing is disabled. "
-            "Provide a legal local 30-90 second audio file instead."
+            "Provide a legal local 30-90 second audio clip or 3-8 minute full song instead."
         ),
     }
 
@@ -66,6 +80,48 @@ def wav_duration(path: Path) -> float:
         frames = handle.getnframes()
         rate = handle.getframerate()
     return frames / float(rate)
+
+
+def classify_duration(duration_seconds: float) -> str:
+    """Return the supported duration class or raise a policy error."""
+
+    if MIN_CLIP_DURATION_SECONDS <= duration_seconds <= MAX_CLIP_DURATION_SECONDS:
+        return "clip"
+    if MIN_FULL_SONG_DURATION_SECONDS <= duration_seconds <= MAX_FULL_SONG_DURATION_SECONDS:
+        return "full_song"
+    raise InputPolicyError(SUPPORTED_DURATION_MESSAGE)
+
+
+def build_processing_plan(duration_seconds: float, duration_class: str) -> dict:
+    """Build local-first processing metadata for later AI stages."""
+
+    if duration_class == "clip":
+        return {
+            "mode": "single_pass_clip",
+            "target_length_seconds": float(duration_seconds),
+            "chunk_seconds": float(duration_seconds),
+            "overlap_seconds": 0.0,
+            "chunks": [{"index": 1, "start": 0.0, "end": round(float(duration_seconds), 3)}],
+        }
+
+    chunks: list[dict[str, float | int]] = []
+    cursor = 0.0
+    index = 1
+    while cursor < duration_seconds:
+        end = min(duration_seconds, cursor + FULL_SONG_CHUNK_SECONDS)
+        chunks.append({"index": index, "start": round(cursor, 3), "end": round(end, 3)})
+        if end >= duration_seconds:
+            break
+        cursor = max(0.0, end - FULL_SONG_CHUNK_OVERLAP_SECONDS)
+        index += 1
+
+    return {
+        "mode": "chunked_full_song",
+        "target_length_seconds": round(float(duration_seconds), 3),
+        "chunk_seconds": FULL_SONG_CHUNK_SECONDS,
+        "overlap_seconds": FULL_SONG_CHUNK_OVERLAP_SECONDS,
+        "chunks": chunks,
+    }
 
 
 def validate_local_audio(
@@ -91,14 +147,16 @@ def validate_local_audio(
     if start < 0 or end <= start:
         raise InputPolicyError("Trim range must have non-negative start and end greater than start.")
     clip_duration = end - start
-    if clip_duration < MIN_DURATION_SECONDS or clip_duration > MAX_DURATION_SECONDS:
-        raise InputPolicyError("MVP requires an explicit 30-90 second legal local audio clip or trim range.")
+    duration_class = classify_duration(clip_duration)
 
     return AudioInput(
         input_type="local_audio",
         input_uri=str(path),
         rights_attestation=rights_attestation,
-        duration_seconds=duration,
+        duration_seconds=round(float(clip_duration), 3),
+        source_duration_seconds=round(float(duration), 3) if duration is not None else None,
+        duration_class=duration_class,
+        processing_plan=build_processing_plan(clip_duration, duration_class),
         trim={"start": start, "end": end},
     )
 

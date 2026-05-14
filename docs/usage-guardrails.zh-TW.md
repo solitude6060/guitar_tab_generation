@@ -8,7 +8,12 @@
 - 已授權 / 已取得 license 的音訊；
 - 公領域音訊，且有來源記錄。
 
-MVP 支援副檔名：`.wav`、`.mp3`、`.flac`、`.m4a`。接受片段長度為 30–90 秒。更長的檔案必須明確 trim；更短的檔案不符合 golden fixture 驗收條件。
+MVP 支援副檔名：`.wav`、`.mp3`、`.flac`、`.m4a`。接受的有效長度為：
+
+- 30–90 秒：deterministic 練習片段與 golden fixtures。
+- 3–8 分鐘（180–480 秒）：必備支援的完整歌曲。
+
+90–180 秒之間的中間長度會先被拒絕，直到後續產品模式定義清楚 UX。更長的來源檔必須明確 trim 到上述其中一個支援區間。
 
 ## URL / YouTube policy gate
 
@@ -21,7 +26,7 @@ URL 支援是未來合法流程，不是 MVP 功能。MVP 行為是 stub / polic
 | allowlist URL | MVP 不實作，留到 post-MVP ADR |
 | 本機檔案路徑 | 繼續本機音訊驗證 |
 
-policy response 應包含穩定 reason code，例如 `URL_INPUT_DISABLED` 或 `URL_POLICY_GATE_DISABLED`，並告知下一步：提供合法本機音訊片段。
+policy response 應包含穩定 reason code，例如 `URL_INPUT_DISABLED` 或 `URL_POLICY_GATE_DISABLED`，並告知下一步：提供合法本機音訊片段，或合法本機 3–8 分鐘完整歌曲。
 
 ## 輸出 artifact 契約
 
