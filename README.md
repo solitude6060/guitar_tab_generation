@@ -14,6 +14,7 @@ This project follows the approved planning artifacts:
 The MVP is intentionally narrow:
 
 - **Input:** local audio files that the user owns, is authorized to use, or created.
+- **Formats:** `.wav`, `.mp3`, `.flac`, and `.m4a`; non-WAV ingest requires local `ffprobe` and `ffmpeg`.
 - **Duration:** 30–90 second clips for golden fixtures, plus required 3–8 minute full-song inputs（180–480 seconds）.
 - **Output:** `tab.md`, `arrangement.json`, and `quality_report.json`.
 - **Guitar scope:** standard tuning EADGBE, string 1–6, fret 0–20.
@@ -43,6 +44,13 @@ For a longer legal source file, pass an explicit trim that yields either a 30–
 ```bash
 uv run guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 30 --trim-end 90 --out out/clip
 uv run guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 0 --trim-end 240 --out out/full_song
+```
+
+For `.mp3`, `.flac`, and `.m4a`, the CLI uses local `ffprobe` to read duration
+and local `ffmpeg` to create `audio_normalized.wav`:
+
+```bash
+uv run guitar-tab-generation transcribe path/to/legal_song.mp3 --out out/legal_song
 ```
 
 URL inputs should be used only to verify the policy gate:

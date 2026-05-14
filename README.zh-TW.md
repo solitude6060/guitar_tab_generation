@@ -14,6 +14,7 @@
 第一版刻意收窄：
 
 - **輸入**：使用者擁有、被授權使用、或自行建立的本機音訊檔。
+- **格式**：`.wav`、`.mp3`、`.flac`、`.m4a`；非 WAV 需要本機 `ffprobe` 與 `ffmpeg`。
 - **長度**：30–90 秒片段保留給 golden fixtures；正式完整歌曲必備支援 3–8 分鐘（180–480 秒）。
 - **輸出**：`tab.md`、`arrangement.json`、`quality_report.json`。
 - **吉他範圍**：標準調弦 EADGBE、string 1–6、fret 0–20。
@@ -60,6 +61,12 @@ uv run guitar-tab-generation transcribe fixtures/simple_chords_30_90s.wav --back
 ```bash
 uv run guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 30 --trim-end 90 --out out/clip
 uv run guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 0 --trim-end 240 --out out/full_song
+```
+
+對 `.mp3`、`.flac`、`.m4a`，CLI 會用本機 `ffprobe` 讀取長度，並用本機 `ffmpeg` 產生 `audio_normalized.wav`：
+
+```bash
+uv run guitar-tab-generation transcribe path/to/legal_song.mp3 --out out/legal_song
 ```
 
 URL 只應用於測試 policy gate：

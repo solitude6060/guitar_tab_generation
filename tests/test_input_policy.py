@@ -57,3 +57,42 @@ def test_middle_length_audio_requires_supported_clip_or_full_song_window(tmp_pat
 
     assert "30-90" in str(exc.value)
     assert "3-8 minute" in str(exc.value)
+
+
+def test_non_wav_full_song_duration_is_read_with_ffprobe(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    audio_path = tmp_path / "legal_full_song.mp3"
+    audio_path.write_bytes(b"fake local mp3 bytes")
+    commands: list[list[str]] = []
+
+    def fake_run(command: list[str]) -> tuple[int, str, str]:
+        commands.append(command)
+        return 0, "180.0", ""
+
+    import guitar_tab_generation.input_adapter as input_adapter
+
+    monkeypatch.setattr(input_adapter, "_run_command", fake_run)
+
+    audio = resolve_local_audio(audio_path)
+
+    assert commands and commands[0][0] == "ffprobe"
+    assert audio.source_duration_seconds == 180.0
+    assert audio.duration_seconds == 180.0
+    assert audio.duration_class == "full_song"
+
+
+def test_non_wav_without_ffprobe_reports_actionable_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    audio_path = tmp_path / "legal_full_song.m4a"
+    audio_path.write_bytes(b"fake local m4a bytes")
+
+    def fake_run(command: list[str]) -> tuple[int, str, str]:
+        return 127, "", "ffprobe not found"
+
+    import guitar_tab_generation.input_adapter as input_adapter
+
+    monkeypatch.setattr(input_adapter, "_run_command", fake_run)
+
+    with pytest.raises(InputPolicyError) as exc:
+        resolve_local_audio(audio_path)
+
+    assert "ffprobe" in str(exc.value)
+    assert "local" in str(exc.value)
