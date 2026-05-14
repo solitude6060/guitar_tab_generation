@@ -15,6 +15,11 @@ Supported MVP suffixes are `.wav`, `.mp3`, `.flac`, and `.m4a`. Accepted effecti
 
 Middle-length inputs between 90 and 180 seconds are intentionally rejected until a later product mode defines their UX. Longer source files must be trimmed explicitly into one of the supported windows.
 
+Non-WAV local ingest requires local `ffprobe` for duration probing and local
+`ffmpeg` for conversion into `audio_normalized.wav`. The project must fail with
+an actionable local-tool error when those tools are missing; it must not fall
+back to downloading, uploading, or cloud media parsing.
+
 ## URL and YouTube policy gate
 
 URL support is a future legal path, not an MVP feature. The MVP behavior is a stub/policy gate:

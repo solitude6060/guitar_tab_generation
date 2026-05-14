@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 
 from .ai_runtime import build_resource_plan, collect_ai_runtime_status, format_runtime_status_markdown
+from .audio_preprocess import AudioPreprocessError
 from .artifact_viewer import ArtifactViewerError, write_artifact_viewer
 from .artifact_interface import write_artifact_interface
 from .backends import BackendExecutionError
@@ -71,6 +72,9 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         except InputError as exc:
             print(f"Input error: {exc}", file=sys.stderr)
+            return 1
+        except AudioPreprocessError as exc:
+            print(f"Audio preprocess error: {exc}", file=sys.stderr)
             return 1
         except BackendExecutionError as exc:
             print(f"Backend error: {exc}", file=sys.stderr)

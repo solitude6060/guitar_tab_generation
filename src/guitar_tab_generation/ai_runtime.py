@@ -112,6 +112,7 @@ def build_resource_plan() -> str:
 | 分軌 | Demucs / HTDemucs | 4090 可負擔，建議單獨跑 |
 | 單音校準 | CREPE / torchcrepe | 4090 可負擔 |
 | 節奏 / 特徵 | Essentia + librosa | CPU/GPU 都可 |
+| 本機音訊 ingest | ffprobe + ffmpeg | CPU 為主，先轉成 normalized WAV |
 | 教學文字 | 本機量化 LLM | 14B 穩，32B 視量化策略 |
 | 匯出 | MusicXML / MIDI | 幾乎不吃 GPU |
 
@@ -127,11 +128,12 @@ def build_resource_plan() -> str:
 
 ## 排程建議
 
-1. 3–8 分鐘完整歌曲先切成 60 秒 chunk、2 秒 overlap，逐段分軌/轉譜。
-2. Demucs 分軌單獨跑，避免和 32B LLM 搶 VRAM。
-3. Basic Pitch / CREPE 跑完後釋放 GPU。
-4. 本機 LLM 只讀 artifacts：`arrangement.json`、`quality_report.json`、`tab.md`。
-5. MiniMax 只做備援與創作輔助，不當 transcription 真相來源。
+1. 非 WAV 先用 ffprobe 讀長度，再用 ffmpeg 轉成 `audio_normalized.wav`。
+2. 3–8 分鐘完整歌曲先切成 60 秒 chunk、2 秒 overlap，逐段分軌/轉譜。
+3. Demucs 分軌單獨跑，避免和 32B LLM 搶 VRAM。
+4. Basic Pitch / CREPE 跑完後釋放 GPU。
+5. 本機 LLM 只讀 artifacts：`arrangement.json`、`quality_report.json`、`tab.md`。
+6. MiniMax 只做備援與創作輔助，不當 transcription 真相來源。
 """
 
 

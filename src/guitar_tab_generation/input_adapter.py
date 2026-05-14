@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import subprocess
+from typing import Callable
 from urllib.parse import urlparse
 import wave
 
@@ -19,6 +21,8 @@ SUPPORTED_DURATION_MESSAGE = (
     "Supported legal local audio duration is either a 30-90 second practice clip "
     "or a 3-8 minute full song (180-480 seconds)."
 )
+
+CommandRunner = Callable[[list[str]], tuple[int, str, str]]
 
 
 class InputPolicyError(ValueError):
@@ -82,6 +86,42 @@ def wav_duration(path: Path) -> float:
     return frames / float(rate)
 
 
+def _run_command(command: list[str]) -> tuple[int, str, str]:
+    try:
+        completed = subprocess.run(command, check=False, capture_output=True, text=True, timeout=30)
+    except FileNotFoundError as exc:
+        return 127, "", str(exc)
+    except subprocess.SubprocessError as exc:
+        return 1, "", str(exc)
+    return completed.returncode, completed.stdout.strip(), completed.stderr.strip()
+
+
+def ffprobe_duration(path: Path, run_command: CommandRunner | None = None) -> float:
+    """Read local non-WAV media duration with ffprobe."""
+
+    runner = run_command or _run_command
+    code, stdout, stderr = runner([
+        "ffprobe",
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "default=noprint_wrappers=1:nokey=1",
+        str(path),
+    ])
+    if code != 0:
+        detail = stderr or stdout or "unknown ffprobe error"
+        raise InputPolicyError(f"local ffprobe could not read audio duration: {detail}")
+    try:
+        duration = float(stdout.strip().splitlines()[0])
+    except (IndexError, ValueError) as exc:
+        raise InputPolicyError("local ffprobe returned an invalid audio duration.") from exc
+    if duration <= 0:
+        raise InputPolicyError("local ffprobe returned a non-positive audio duration.")
+    return duration
+
+
 def classify_duration(duration_seconds: float) -> str:
     """Return the supported duration class or raise a policy error."""
 
@@ -139,11 +179,9 @@ def validate_local_audio(
     if path.suffix.lower() not in SUPPORTED_AUDIO_EXTENSIONS:
         raise InputPolicyError(f"Unsupported audio format: {path.suffix}")
 
-    duration = wav_duration(path) if path.suffix.lower() == ".wav" else None
+    duration = wav_duration(path) if path.suffix.lower() == ".wav" else ffprobe_duration(path)
     start = 0.0 if trim_start is None else float(trim_start)
     end = duration if trim_end is None else float(trim_end)
-    if end is None:
-        raise InputPolicyError("Non-WAV inputs require explicit trim_end until ffprobe support is added.")
     if start < 0 or end <= start:
         raise InputPolicyError("Trim range must have non-negative start and end greater than start.")
     clip_duration = end - start
