@@ -8,6 +8,7 @@ import sys
 from .artifact_viewer import ArtifactViewerError, write_artifact_viewer
 from .artifact_interface import write_artifact_interface
 from .backends import BackendExecutionError
+from .exporters import write_export
 from .input_adapter import InputError, PolicyGateError
 from .pipeline import transcribe_to_tab
 from .practice_tutorial import write_practice_tutorial
@@ -40,6 +41,10 @@ def build_parser() -> argparse.ArgumentParser:
     interface.add_argument(
         "--out", type=Path, default=None, help="Output HTML path; defaults to <artifact_dir>/interface.html"
     )
+    export = subparsers.add_parser("export", help="Export MusicXML or MIDI from an artifact directory")
+    export.add_argument("artifact_dir", type=Path)
+    export.add_argument("--format", choices=["musicxml", "midi"], required=True)
+    export.add_argument("--out", type=Path, default=None, help="Output path; defaults to score.musicxml or score.mid")
     return parser
 
 
@@ -89,6 +94,14 @@ def main(argv: list[str] | None = None) -> int:
             written = write_artifact_interface(args.artifact_dir, args.out)
         except ArtifactViewerError as exc:
             print(f"Artifact interface error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {written}")
+        return 0
+    if args.command == "export":
+        try:
+            written = write_export(args.artifact_dir, args.format, args.out)
+        except (ArtifactViewerError, ValueError) as exc:
+            print(f"Export error: {exc}", file=sys.stderr)
             return 1
         print(f"Wrote {written}")
         return 0
