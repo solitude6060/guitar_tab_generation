@@ -1,0 +1,167 @@
+name: guitar-tab-generation
+
+x-mount-src: &mount-src
+  type: bind
+  source: ./src
+  target: /workspace/src
+x-mount-tests: &mount-tests
+  type: bind
+  source: ./tests
+  target: /workspace/tests
+x-mount-docs: &mount-docs
+  type: bind
+  source: ./docs
+  target: /workspace/docs
+x-mount-fixtures: &mount-fixtures
+  type: bind
+  source: ./fixtures
+  target: /workspace/fixtures
+x-mount-schemas: &mount-schemas
+  type: bind
+  source: ./schemas
+  target: /workspace/schemas
+x-mount-pyproject: &mount-pyproject
+  type: bind
+  source: ./pyproject.toml
+  target: /workspace/pyproject.toml
+  read_only: true
+x-mount-uv-lock: &mount-uv-lock
+  type: bind
+  source: ./uv.lock
+  target: /workspace/uv.lock
+  read_only: true
+x-mount-python-version: &mount-python-version
+  type: bind
+  source: ./.python-version
+  target: /workspace/.python-version
+  read_only: true
+x-mount-readme: &mount-readme
+  type: bind
+  source: ./README.md
+  target: /workspace/README.md
+  read_only: true
+x-mount-readme-zh: &mount-readme-zh
+  type: bind
+  source: ./README.zh-TW.md
+  target: /workspace/README.zh-TW.md
+  read_only: true
+
+services:
+  app:
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    image: guitar-tab-generation:dev
+    working_dir: /workspace
+    volumes:
+      - *mount-src
+      - *mount-tests
+      - *mount-docs
+      - *mount-fixtures
+      - *mount-schemas
+      - *mount-pyproject
+      - *mount-uv-lock
+      - *mount-python-version
+      - *mount-readme
+      - *mount-readme-zh
+      - uv-cache:/root/.cache/uv
+      - app-output:/workspace/out
+    environment:
+      PYTHONUNBUFFERED: "1"
+      UV_LINK_MODE: copy
+    mem_limit: ${APP_MEM_LIMIT:-8g}
+    cpus: ${APP_CPUS:-4}
+    command: ["uv", "run", "guitar-tab-generation", "--help"]
+
+  ai-gpu:
+    profiles: ["gpu-ai"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gpu
+      args:
+        INSTALL_HEAVY_AI: ${INSTALL_HEAVY_AI:-false}
+    image: guitar-tab-generation:gpu-ai
+    working_dir: /workspace
+    volumes:
+      - *mount-src
+      - *mount-tests
+      - *mount-docs
+      - *mount-fixtures
+      - *mount-schemas
+      - *mount-pyproject
+      - *mount-uv-lock
+      - *mount-python-version
+      - *mount-readme
+      - *mount-readme-zh
+      - uv-cache:/root/.cache/uv
+      - ai-model-cache:/models
+      - app-output:/workspace/out
+    environment:
+      PYTHONUNBUFFERED: "1"
+      UV_LINK_MODE: copy
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      AI_MODEL_CACHE: /models
+      OLLAMA_HOST: http://ollama:11434
+      TORCH_HOME: /models/torch
+      XDG_CACHE_HOME: /models/xdg
+      CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-0}
+      PYTORCH_CUDA_ALLOC_CONF: ${PYTORCH_CUDA_ALLOC_CONF:-max_split_size_mb:512}
+      GPU_TESTS_ENABLED: ${GPU_TESTS_ENABLED:-0}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: ["uv", "run", "guitar-tab-generation", "ai-backends"]
+    shm_size: ${GPU_SHM_SIZE:-2g}
+    mem_limit: ${GPU_MEM_LIMIT:-20g}
+    cpus: ${GPU_CPUS:-8}
+
+  ollama:
+    profiles: ["llm"]
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    environment:
+      OLLAMA_KEEP_ALIVE: "30m"
+    mem_limit: ${OLLAMA_MEM_LIMIT:-16g}
+    cpus: ${OLLAMA_CPUS:-6}
+
+  cloud-backup:
+    profiles: ["cloud-backup"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    image: guitar-tab-generation:dev
+    working_dir: /workspace
+    volumes:
+      - *mount-src
+      - *mount-tests
+      - *mount-docs
+      - *mount-fixtures
+      - *mount-schemas
+      - *mount-pyproject
+      - *mount-uv-lock
+      - *mount-python-version
+      - *mount-readme
+      - *mount-readme-zh
+      - uv-cache:/root/.cache/uv
+    environment:
+      PYTHONUNBUFFERED: "1"
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY:-}
+      MINIMAX_BASE_URL: ${MINIMAX_BASE_URL:-}
+    mem_limit: ${APP_MEM_LIMIT:-8g}
+    cpus: ${APP_CPUS:-4}
+    command: ["uv", "run", "guitar-tab-generation", "ai-resources"]
+
+volumes:
+  uv-cache:
+  ai-model-cache:
+  ollama-data:
+  app-output:
