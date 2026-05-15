@@ -103,6 +103,9 @@ services:
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       AI_MODEL_CACHE: /models
+      MODEL_CACHE_DIR: /models
+      MODEL_SMOKE_DOWNLOAD: ${MODEL_SMOKE_DOWNLOAD:-0}
+      GPU_MIN_FREE_MB: ${GPU_MIN_FREE_MB:-12000}
       OLLAMA_HOST: http://ollama:11434
       TORCH_HOME: /models/torch
       XDG_CACHE_HOME: /models/xdg
@@ -116,7 +119,7 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    command: ["uv", "run", "guitar-tab-generation", "ai-backends"]
+    command: ["uv", "run", "guitar-tab-generation", "model-smoke", "--json"]
     shm_size: ${GPU_SHM_SIZE:-2g}
     mem_limit: ${GPU_MEM_LIMIT:-20g}
     cpus: ${GPU_CPUS:-8}

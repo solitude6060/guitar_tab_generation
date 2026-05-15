@@ -52,6 +52,7 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 | P12 FFmpeg Local Audio Ingest | `feature/ffmpeg-local-audio-ingest` | 支援非 WAV 本機音訊自動長度偵測與 normalized WAV 轉檔 | mp3/flac/m4a use ffprobe + ffmpeg locally |
 | P13 Local AI Backend Registry | `feature/local-ai-backend-registry` | 建立本機 AI backend/model route 可檢查狀態 | `ai-backends` CLI lists Basic Pitch/Demucs/torchcrepe/Essentia/local LLM |
 | P14 Docker Compose Local AI Runtime | `feature/docker-compose-ai-runtime` | 建立 dev/gpu-ai/llm/cloud-backup compose profiles | `docker compose config`; dev image supports uv/ffmpeg CLI |
+| P15 Model Download Smoke Harness | `feature/model-download-smoke-harness` | 安全、可重現的本機模型下載/整合 smoke harness | 預設不下載/不使用 GPU；opt-in + VRAM guard |
 
 ## 3. Recommended Ralph commands
 
@@ -138,4 +139,11 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 
 ```text
 使用 Ralph 完成 P14：依照 docs/plans/p14-docker-compose-ai-runtime-prd-20260515.md 與 docs/plans/p14-docker-compose-ai-runtime-test-spec-20260515.md，新增 Docker Compose dev/gpu-ai/llm/cloud-backup profiles；dev 支援 uv/pytest/CLI/ffmpeg，gpu-ai 預留 CUDA/PyTorch，MiniMax token 只用環境變數；嚴格 SDD/TDD/git flow，用 uv。
+```
+
+
+### P15
+
+```text
+使用 Ralph 完成 P15：依照 docs/plans/p15-model-download-smoke-harness-prd-20260515.md 與 docs/plans/p15-model-download-smoke-harness-test-spec-20260515.md，新增 safe model-smoke CLI；預設不下載、不使用 GPU，只有 --download / MODEL_SMOKE_DOWNLOAD=1 與 --allow-gpu / GPU_TESTS_ENABLED=1 才執行；必須檢查 GPU free VRAM，VRAM 不足時 skip；嚴格 SDD/TDD/git flow，用 uv。
 ```
