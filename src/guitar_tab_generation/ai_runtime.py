@@ -8,6 +8,8 @@ import subprocess
 import sys
 from typing import Callable, Any
 
+from .ai_backends import collect_ai_backend_status
+
 
 CommandRunner = Callable[[list[str]], tuple[int, str, str]]
 
@@ -66,6 +68,7 @@ def collect_ai_runtime_status(run_command: CommandRunner = _default_runner) -> d
             "version": ffmpeg_first_line,
         },
         "torch": _probe_torch(),
+        "ai_backends": collect_ai_backend_status(),
         "resource_profile": "local-rtx-4090-first",
         "secrets_policy": "Read provider tokens from environment variables only; never write tokens to repo.",
     }
@@ -77,6 +80,8 @@ def format_runtime_status_markdown(status: dict[str, Any]) -> str:
     gpu = status["gpu"]
     ffmpeg = status["ffmpeg"]
     torch = status["torch"]
+    ai_backends = status.get("ai_backends", {})
+    available_backends = sum(1 for backend in ai_backends.get("backends", []) if backend.get("available"))
     return "\n".join([
         "# AI Runtime Doctor",
         "",
@@ -87,6 +92,7 @@ def format_runtime_status_markdown(status: dict[str, Any]) -> str:
         f"- ffmpeg: {'available' if ffmpeg['available'] else 'missing'}",
         f"- PyTorch: {'available' if torch['available'] else 'missing'}",
         f"- CUDA: {'available' if torch.get('cuda_available') else 'missing'}",
+        f"- Local AI backends available: {available_backends}/{len(ai_backends.get('backends', []))}",
         "",
     ])
 
@@ -103,6 +109,7 @@ def build_resource_plan() -> str:
 - 完整歌曲必備：3–8 分鐘（180–480 秒）音訊走 chunked local processing。
 - MiniMax 是備援：只在本機模型不足、需要音樂生成/cover/lyrics 輔助時使用。
 - 不要把 token 寫入 repo；MiniMax token 只允許從環境變數讀取。
+- 可用 `guitar-tab-generation ai-backends` 檢查本機模型/工具路線。
 
 ## 本機模型路線
 

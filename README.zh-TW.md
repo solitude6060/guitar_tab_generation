@@ -69,6 +69,13 @@ uv run guitar-tab-generation transcribe path/to/legal_audio.wav --trim-start 0 -
 uv run guitar-tab-generation transcribe path/to/legal_song.mp3 --out out/legal_song
 ```
 
+安裝重模型前，可先檢查目前選定的本機 AI backend 路線：
+
+```bash
+uv run guitar-tab-generation ai-backends
+uv run guitar-tab-generation ai-backends --json
+```
+
 URL 只應用於測試 policy gate：
 
 ```bash
