@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_LINK_MODE=copy
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        ffmpeg \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir uv
+
+WORKDIR /workspace
+
+COPY pyproject.toml uv.lock .python-version ./
+COPY src ./src
+COPY tests ./tests
+COPY README.md README.zh-TW.md ./
+
+RUN uv sync --group dev
+
+CMD ["uv", "run", "guitar-tab-generation", "--help"]
