@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 import sys
 
+from .ai_backends import collect_ai_backend_status, format_ai_backend_status_markdown
 from .ai_runtime import build_resource_plan, collect_ai_runtime_status, format_runtime_status_markdown
 from .audio_preprocess import AudioPreprocessError
 from .artifact_viewer import ArtifactViewerError, write_artifact_viewer
@@ -50,6 +51,8 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_ai = subparsers.add_parser("doctor-ai", help="Inspect local AI runtime readiness")
     doctor_ai.add_argument("--json", action="store_true", help="Output machine-readable JSON")
     subparsers.add_parser("ai-resources", help="Print the local 4090 AI resource plan with MiniMax backup policy")
+    ai_backends = subparsers.add_parser("ai-backends", help="Inspect selected local AI backend/model availability")
+    ai_backends.add_argument("--json", action="store_true", help="Output machine-readable JSON")
     return parser
 
 
@@ -124,6 +127,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "ai-resources":
         print(build_resource_plan())
+        return 0
+    if args.command == "ai-backends":
+        status = collect_ai_backend_status()
+        if args.json:
+            import json
+
+            print(json.dumps(status, ensure_ascii=False, indent=2))
+        else:
+            print(format_ai_backend_status_markdown(status))
         return 0
     parser.error("unknown command")
     return 1

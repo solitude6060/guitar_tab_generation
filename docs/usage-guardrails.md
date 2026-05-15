@@ -20,6 +20,10 @@ Non-WAV local ingest requires local `ffprobe` for duration probing and local
 an actionable local-tool error when those tools are missing; it must not fall
 back to downloading, uploading, or cloud media parsing.
 
+Use `uv run guitar-tab-generation ai-backends` to inspect selected local AI
+backend availability. This command is diagnostic only: it must not install
+packages, download models, run inference, or use cloud APIs.
+
 ## URL and YouTube policy gate
 
 URL support is a future legal path, not an MVP feature. The MVP behavior is a stub/policy gate:

@@ -17,6 +17,8 @@ MVP 支援副檔名：`.wav`、`.mp3`、`.flac`、`.m4a`。接受的有效長度
 
 非 WAV 本機音訊需要本機 `ffprobe` 取得長度，並用本機 `ffmpeg` 轉成 `audio_normalized.wav`。若工具缺失，專案必須回報可行動的本機工具錯誤；不得改用下載、上傳或雲端媒體解析。
 
+可用 `uv run guitar-tab-generation ai-backends` 檢查目前選定的本機 AI backend 可用狀態。此指令只做診斷：不得安裝套件、下載模型、執行推論或使用雲端 API。
+
 ## URL / YouTube policy gate
 
 URL 支援是未來合法流程，不是 MVP 功能。MVP 行為是 stub / policy gate：

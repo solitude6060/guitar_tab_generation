@@ -53,6 +53,13 @@ and local `ffmpeg` to create `audio_normalized.wav`:
 uv run guitar-tab-generation transcribe path/to/legal_song.mp3 --out out/legal_song
 ```
 
+Inspect the selected local AI backend route before installing heavy models:
+
+```bash
+uv run guitar-tab-generation ai-backends
+uv run guitar-tab-generation ai-backends --json
+```
+
 URL inputs should be used only to verify the policy gate:
 
 ```bash
