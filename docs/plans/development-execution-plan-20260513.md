@@ -51,6 +51,7 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 | P11 Full Song Length Support | `feature/full-song-length-support` | 支援合法本機 3–8 分鐘完整歌曲輸入 | 180s/480s accepted；artifact 有 full-song chunk plan |
 | P12 FFmpeg Local Audio Ingest | `feature/ffmpeg-local-audio-ingest` | 支援非 WAV 本機音訊自動長度偵測與 normalized WAV 轉檔 | mp3/flac/m4a use ffprobe + ffmpeg locally |
 | P13 Local AI Backend Registry | `feature/local-ai-backend-registry` | 建立本機 AI backend/model route 可檢查狀態 | `ai-backends` CLI lists Basic Pitch/Demucs/torchcrepe/Essentia/local LLM |
+| P14 Docker Compose Local AI Runtime | `feature/docker-compose-ai-runtime` | 建立 dev/gpu-ai/llm/cloud-backup compose profiles | `docker compose config`; dev image supports uv/ffmpeg CLI |
 
 ## 3. Recommended Ralph commands
 
@@ -130,4 +131,11 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 
 ```text
 使用 Ralph 完成 P13：依照 docs/plans/p13-local-ai-backend-registry-prd-20260515.md 與 docs/plans/p13-local-ai-backend-registry-test-spec-20260515.md，新增本機 AI backend registry 與 `ai-backends` CLI；只偵測 Basic Pitch、Demucs、torchcrepe、Essentia/local feature、local LLM 狀態，不安裝重依賴、不跑模型推論；嚴格 SDD/TDD/git flow，用 uv。
+```
+
+
+### P14
+
+```text
+使用 Ralph 完成 P14：依照 docs/plans/p14-docker-compose-ai-runtime-prd-20260515.md 與 docs/plans/p14-docker-compose-ai-runtime-test-spec-20260515.md，新增 Docker Compose dev/gpu-ai/llm/cloud-backup profiles；dev 支援 uv/pytest/CLI/ffmpeg，gpu-ai 預留 CUDA/PyTorch，MiniMax token 只用環境變數；嚴格 SDD/TDD/git flow，用 uv。
 ```

@@ -5,3 +5,12 @@ __pycache__/
 .pytest_cache/
 .venv/
 *.egg-info/
+.env
+out/
+dist/
+build/
+*.log
+*.wav
+*.mp3
+*.flac
+*.m4a
