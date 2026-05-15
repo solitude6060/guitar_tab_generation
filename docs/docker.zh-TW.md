@@ -18,7 +18,7 @@ English version: [`docs/docker.md`](docker.md)
 ```bash
 docker compose --profile dev run --rm app uv run pytest -q
 docker compose --profile dev run --rm app uv run guitar-tab-generation --help
-docker compose --profile gpu-ai run --rm ai-gpu uv run guitar-tab-generation ai-backends
+docker compose --profile gpu-ai run --rm ai-gpu uv run guitar-tab-generation model-smoke --json
 docker compose --profile llm up ollama
 docker compose --profile cloud-backup run --rm cloud-backup
 ```
@@ -42,7 +42,7 @@ INSTALL_HEAVY_AI=true docker compose --profile gpu-ai build ai-gpu
 - `PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512`
 - `GPU_TESTS_ENABLED=0`
 
-一般測試請維持 `GPU_TESTS_ENABLED=0`。只有在 GPU 空閒、且你明確要跑模型 smoke tests 時，才把它設為 `1`。
+一般測試請維持 `GPU_TESTS_ENABLED=0`。只有在 GPU 空閒、且你明確要跑模型 smoke tests 時，才把它設為 `1`。模型下載還需要 `MODEL_SMOKE_DOWNLOAD=1` 或 `--download`；詳見 [`docs/model-smoke.zh-TW.md`](model-smoke.zh-TW.md)。
 
 ## GPU 需求
 

@@ -19,7 +19,7 @@ LLM work, and cloud-backup credentials stay separated.
 ```bash
 docker compose --profile dev run --rm app uv run pytest -q
 docker compose --profile dev run --rm app uv run guitar-tab-generation --help
-docker compose --profile gpu-ai run --rm ai-gpu uv run guitar-tab-generation ai-backends
+docker compose --profile gpu-ai run --rm ai-gpu uv run guitar-tab-generation model-smoke --json
 docker compose --profile llm up ollama
 docker compose --profile cloud-backup run --rm cloud-backup
 ```
@@ -47,7 +47,7 @@ shared with other projects:
 - `GPU_TESTS_ENABLED=0`
 
 Keep `GPU_TESTS_ENABLED=0` for normal test runs. Set it to `1` only when the GPU
-is idle and you intentionally want model smoke tests to run.
+is idle and you intentionally want model smoke tests to run. Model downloads also require `MODEL_SMOKE_DOWNLOAD=1` or `--download`; see [`docs/model-smoke.md`](model-smoke.md).
 
 ## GPU requirements
 
