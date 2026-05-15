@@ -17,6 +17,9 @@ def test_compose_declares_required_profiles_and_services() -> None:
     assert "INSTALL_HEAVY_AI" in text
     assert "NVIDIA_VISIBLE_DEVICES" in text
     assert "MINIMAX_API_KEY" in text
+    assert "model-smoke" in text
+    assert "MODEL_SMOKE_DOWNLOAD" in text
+    assert "GPU_MIN_FREE_MB" in text
     assert "source: ./src" in text
     assert "source: ./tests" in text
     assert "target: /workspace\n" not in text
@@ -41,6 +44,8 @@ def test_env_example_uses_placeholders_only() -> None:
     assert "MINIMAX_API_KEY=" in text
     assert "your_minimax_api_key_here" in text
     assert "INSTALL_HEAVY_AI=false" in text
+    assert "MODEL_SMOKE_DOWNLOAD=0" in text
+    assert "GPU_MIN_FREE_MB=12000" in text
     assert "sk-" not in text
     assert "Bearer " not in text
 

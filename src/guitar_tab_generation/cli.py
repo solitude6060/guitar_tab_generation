@@ -13,6 +13,7 @@ from .artifact_interface import write_artifact_interface
 from .backends import BackendExecutionError
 from .exporters import write_export
 from .input_adapter import InputError, PolicyGateError
+from .model_smoke import available_backend_ids, build_model_smoke_plan, format_model_smoke_markdown
 from .pipeline import transcribe_to_tab
 from .practice_tutorial import write_practice_tutorial
 
@@ -53,6 +54,12 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("ai-resources", help="Print the local 4090 AI resource plan with MiniMax backup policy")
     ai_backends = subparsers.add_parser("ai-backends", help="Inspect selected local AI backend/model availability")
     ai_backends.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    model_smoke = subparsers.add_parser("model-smoke", help="Plan or run safe opt-in local model download smoke checks")
+    model_smoke.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    model_smoke.add_argument("--backend", action="append", choices=available_backend_ids(), help="Backend to include; repeat to include multiple")
+    model_smoke.add_argument("--download", action="store_true", help="Actually run download commands; default only plans")
+    model_smoke.add_argument("--allow-gpu", action="store_true", help="Allow GPU-sensitive smoke checks when VRAM guard passes")
+    model_smoke.add_argument("--min-free-vram-mb", type=int, default=None, help="Minimum free VRAM required for GPU-sensitive checks")
     return parser
 
 
@@ -137,6 +144,24 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(format_ai_backend_status_markdown(status))
         return 0
+    if args.command == "model-smoke":
+        try:
+            plan = build_model_smoke_plan(
+                backends=args.backend,
+                download=args.download,
+                allow_gpu=args.allow_gpu,
+                min_free_vram_mb=args.min_free_vram_mb,
+            )
+        except ValueError as exc:
+            print(f"Model smoke error: {exc}", file=sys.stderr)
+            return 1
+        if args.json:
+            import json
+
+            print(json.dumps(plan, ensure_ascii=False, indent=2))
+        else:
+            print(format_model_smoke_markdown(plan))
+        return 1 if plan["summary"]["failed"] else 0
     parser.error("unknown command")
     return 1
 
