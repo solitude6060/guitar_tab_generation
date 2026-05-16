@@ -18,6 +18,7 @@ The MVP is intentionally narrow:
 - **Duration:** 30–90 second clips for golden fixtures, plus required 3–8 minute full-song inputs（180–480 seconds）.
 - **Output:** `tab.md`, `arrangement.json`, and `quality_report.json`.
 - **Optional DAW Export:** `--format daw` exports a multi-track folder for GarageBand / Logic import (based on chunked full-song plan).
+- **Optional AI Backend:** `--backend basic-pitch` can use a real local note-transcription model after syncing the `ai` dependency group.
 - **Guitar scope:** standard tuning EADGBE, string 1–6, fret 0–20.
 - **Non-goals:** arbitrary YouTube downloads, alternate tunings, required PDF export, proprietary DAW session export, full teaching lessons, and note-perfect/original-fingering guarantees.
 
@@ -86,6 +87,11 @@ For DAW workflow details, see:
 
 - `docs/daw-bundle-export.md`
 - `docs/daw-bundle-export.zh-TW.md`
+
+For the first real AI backend path, see:
+
+- `docs/basic-pitch-backend.md`
+- `docs/basic-pitch-backend.zh-TW.md`
 
 ## Verification
 
