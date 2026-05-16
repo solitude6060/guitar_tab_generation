@@ -6,7 +6,7 @@ from html import escape
 from pathlib import Path
 from typing import Any
 
-from .artifact_viewer import ArtifactBundle, load_artifact_bundle
+from .artifact_viewer import ArtifactBundle, load_artifact_bundle, summarize_f0_calibration
 
 
 def _confidence(value: object) -> str:
@@ -87,6 +87,41 @@ def _format_daw_bundle_section(bundle: ArtifactBundle) -> str:
     )
 
 
+def _format_signed(value: object) -> str:
+    if isinstance(value, (int, float)):
+        return f"{float(value):+.2f}"
+    return "unknown"
+
+
+def _format_f0_calibration_section(bundle: ArtifactBundle) -> str:
+    summary = summarize_f0_calibration(bundle.f0_calibration)
+    if not summary["available"]:
+        return ""
+
+    rows = []
+    for note in summary["risk_notes"][:12]:
+        rows.append(
+            "<tr>"
+            f"<td>{escape(str(note.get('note_id', 'unknown')))}</td>"
+            f"<td>delta {_format_signed(note.get('delta_semitones'))}</td>"
+            f"<td>{_confidence(note.get('periodicity_confidence'))}</td>"
+            f"<td>{escape(str(note.get('status', 'unknown')))}</td>"
+            "</tr>"
+        )
+    table_rows = "".join(rows) or '<tr><td colspan="4">No pitch-risk notes detected.</td></tr>'
+    table = (
+        "<table><thead><tr><th>Note</th><th>Pitch delta</th><th>Periodicity</th><th>Status</th></tr></thead>"
+        f"<tbody>{table_rows}</tbody></table>"
+    )
+    return (
+        "<section>"
+        "<h2>F0 Calibration</h2>"
+        f"<p><strong>Pitch-risk notes:</strong> {summary['risk_count']} / {summary['total_notes']}</p>"
+        f"{table}"
+        "</section>"
+    )
+
+
 def render_artifact_interface_html(bundle: ArtifactBundle) -> str:
     """Render an offline HTML workspace for a generated artifact directory."""
 
@@ -157,6 +192,8 @@ def render_artifact_interface_html(bundle: ArtifactBundle) -> str:
     <h2>Chord progression</h2>
     <p>{_unique_chords(chords)}</p>
   </section>
+
+  {_format_f0_calibration_section(bundle)}
 
   <section>
     <h2>Practice links</h2>

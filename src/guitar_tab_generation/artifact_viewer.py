@@ -20,6 +20,7 @@ class ArtifactBundle:
     arrangement: dict[str, Any]
     quality_report: dict[str, Any]
     tab_markdown: str
+    f0_calibration: dict[str, Any] | None = None
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -49,6 +50,9 @@ def load_artifact_bundle(artifact_dir: Path) -> ArtifactBundle:
         arrangement=_read_json(artifact_dir / "arrangement.json"),
         quality_report=_read_json(artifact_dir / "quality_report.json"),
         tab_markdown=(artifact_dir / "tab.md").read_text(encoding="utf-8"),
+        f0_calibration=_read_json(artifact_dir / "f0_calibration.json")
+        if (artifact_dir / "f0_calibration.json").exists()
+        else None,
     )
 
 
@@ -97,6 +101,69 @@ def _practice_readiness(arrangement: dict[str, Any], quality_report: dict[str, A
     return "Not practice-ready yet. Fix quality failures before treating the TAB as playable."
 
 
+def _format_signed(value: object) -> str:
+    if isinstance(value, (int, float)):
+        return f"{float(value):+.2f}"
+    return "unknown"
+
+
+def summarize_f0_calibration(f0_calibration: dict[str, Any] | None) -> dict[str, Any]:
+    """Summarize optional F0 calibration into user-facing pitch-risk notes."""
+
+    if not f0_calibration:
+        return {"available": False, "total_notes": 0, "risk_count": 0, "risk_notes": []}
+
+    raw_notes = f0_calibration.get("note_calibrations", [])
+    note_calibrations = raw_notes if isinstance(raw_notes, list) else []
+    risk_notes: list[dict[str, Any]] = []
+    for note in note_calibrations:
+        if not isinstance(note, dict):
+            continue
+        delta = note.get("delta_semitones")
+        confidence = note.get("periodicity_confidence")
+        status = str(note.get("status", "unknown"))
+        is_delta_risk = isinstance(delta, (int, float)) and abs(float(delta)) >= 0.5
+        is_confidence_risk = isinstance(confidence, (int, float)) and float(confidence) < 0.5
+        is_status_risk = status != "calibrated"
+        if is_delta_risk or is_confidence_risk or is_status_risk:
+            risk_notes.append(note)
+
+    return {
+        "available": True,
+        "backend": f0_calibration.get("backend", "unknown"),
+        "device": f0_calibration.get("device", "unknown"),
+        "total_notes": len(note_calibrations),
+        "risk_count": len(risk_notes),
+        "risk_notes": risk_notes,
+    }
+
+
+def format_f0_calibration_markdown(f0_calibration: dict[str, Any] | None) -> list[str]:
+    """Return Markdown lines for optional F0 calibration summary."""
+
+    summary = summarize_f0_calibration(f0_calibration)
+    if not summary["available"]:
+        return []
+
+    lines = [
+        "",
+        "## F0 Calibration",
+        f"- Backend: {summary.get('backend', 'unknown')}",
+        f"- Device: {summary.get('device', 'unknown')}",
+        f"- Pitch-risk notes: {summary['risk_count']} / {summary['total_notes']}",
+    ]
+    if summary["risk_notes"]:
+        lines.append("- Risk details:")
+        for note in summary["risk_notes"][:8]:
+            note_id = note.get("note_id", "unknown")
+            delta = _format_signed(note.get("delta_semitones"))
+            confidence = _format_confidence(note.get("periodicity_confidence"))
+            lines.append(f"  - {note_id}: delta {delta} semitones, periodicity {confidence}")
+    else:
+        lines.append("- No pitch-risk notes detected.")
+    return lines
+
+
 def render_artifact_viewer_markdown(bundle: ArtifactBundle) -> str:
     """Render a stable Markdown summary for demos and practice review."""
 
@@ -137,6 +204,8 @@ def render_artifact_viewer_markdown(bundle: ArtifactBundle) -> str:
             lines.append(f"- {warning.get('code', 'UNKNOWN')}: {warning.get('message', '')}")
     else:
         lines.append("- None")
+
+    lines.extend(format_f0_calibration_markdown(bundle.f0_calibration))
 
     lines.extend([
         "",
