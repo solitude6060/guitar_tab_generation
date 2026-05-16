@@ -2,12 +2,22 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import wave
+
 import pytest
 
 from guitar_tab_generation.cli import main
 
 
 FIXTURES = ["simple_chords_30_90s", "single_note_riff_30_90s", "single_note_lead_30_90s"]
+
+
+def _write_silent_wav(path: Path, duration_seconds: float, *, sample_rate: int = 800) -> None:
+    with wave.open(str(path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(1)
+        handle.setframerate(sample_rate)
+        handle.writeframes(b"\0" * int(duration_seconds * sample_rate))
 
 
 @pytest.mark.parametrize("fixture_id", FIXTURES)
@@ -49,3 +59,21 @@ def test_cli_interface_fails_cleanly_when_artifact_is_missing(tmp_path: Path) ->
 
     assert main(["interface", str(artifact_dir)]) == 1
     assert not (artifact_dir / "interface.html").exists()
+
+
+def test_cli_interface_shows_daw_tracks_after_export(tmp_path: Path) -> None:
+    artifact_dir = tmp_path / "full_song"
+    audio_path = tmp_path / "full_song_180.wav"
+    _write_silent_wav(audio_path, 180.0)
+
+    assert main(["transcribe", str(audio_path), "--backend", "fixture", "--out", str(artifact_dir)]) == 0
+    assert main(["export", str(artifact_dir), "--format", "daw"]) == 0
+    assert main(["interface", str(artifact_dir)]) == 0
+
+    html = (artifact_dir / "interface.html").read_text(encoding="utf-8")
+    assert "DAW 匯出策略" in html
+    assert "track-01.mid" in html
+    assert "track-01.musicxml" in html
+    assert "track-02.mid" in html
+    assert "track-02.musicxml" in html
+    assert "建議匯入" in html

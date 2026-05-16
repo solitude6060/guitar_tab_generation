@@ -17,6 +17,7 @@ The MVP is intentionally narrow:
 - **Formats:** `.wav`, `.mp3`, `.flac`, and `.m4a`; non-WAV ingest requires local `ffprobe` and `ffmpeg`.
 - **Duration:** 30–90 second clips for golden fixtures, plus required 3–8 minute full-song inputs（180–480 seconds）.
 - **Output:** `tab.md`, `arrangement.json`, and `quality_report.json`.
+- **Optional DAW Export:** `--format daw` exports a multi-track folder for GarageBand / Logic import (based on chunked full-song plan).
 - **Guitar scope:** standard tuning EADGBE, string 1–6, fret 0–20.
 - **Non-goals:** arbitrary YouTube downloads, alternate tunings, required PDF export, proprietary DAW session export, full teaching lessons, and note-perfect/original-fingering guarantees.
 
@@ -80,6 +81,11 @@ out/<clip>/
 ```
 
 Optional future outputs such as MusicXML, MIDI, or PDF may be added, but they are not MVP completion blockers.
+
+For DAW workflow details, see:
+
+- `docs/daw-bundle-export.md`
+- `docs/daw-bundle-export.zh-TW.md`
 
 ## Verification
 
