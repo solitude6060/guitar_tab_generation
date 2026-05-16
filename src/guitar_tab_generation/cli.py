@@ -16,6 +16,12 @@ from .input_adapter import InputError, PolicyGateError
 from .model_smoke import available_backend_ids, build_model_smoke_plan, format_model_smoke_markdown
 from .pipeline import transcribe_to_tab
 from .practice_tutorial import write_practice_tutorial
+from .torch_backends import (
+    build_torch_backend_smoke_gate,
+    collect_torch_backend_status,
+    format_torch_backend_status_markdown,
+    format_torch_smoke_gate_markdown,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -63,6 +69,14 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("ai-resources", help="Print the local 4090 AI resource plan with MiniMax backup policy")
     ai_backends = subparsers.add_parser("ai-backends", help="Inspect selected local AI backend/model availability")
     ai_backends.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    torch_backends = subparsers.add_parser("torch-backends", help="Inspect Torch-first backend roadmap and readiness")
+    torch_backends.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    torch_smoke = subparsers.add_parser("torch-smoke", help="Plan or run safe Torch-first backend smoke gates")
+    torch_smoke.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    torch_smoke.add_argument("--route", action="append", help="Torch route id to include; repeat to include multiple")
+    torch_smoke.add_argument("--run", dest="run_smoke", action="store_true", help="Actually run smoke commands; default only plans")
+    torch_smoke.add_argument("--allow-gpu", action="store_true", help="Allow GPU-sensitive smoke checks when VRAM guard passes")
+    torch_smoke.add_argument("--min-free-vram-mb", type=int, default=None, help="Minimum free VRAM required for GPU-sensitive checks")
     model_smoke = subparsers.add_parser("model-smoke", help="Plan or run safe opt-in local model download smoke checks")
     model_smoke.add_argument("--json", action="store_true", help="Output machine-readable JSON")
     model_smoke.add_argument("--backend", action="append", choices=available_backend_ids(), help="Backend to include; repeat to include multiple")
@@ -153,6 +167,33 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(format_ai_backend_status_markdown(status))
         return 0
+    if args.command == "torch-backends":
+        status = collect_torch_backend_status()
+        if args.json:
+            import json
+
+            print(json.dumps(status, ensure_ascii=False, indent=2))
+        else:
+            print(format_torch_backend_status_markdown(status))
+        return 0
+    if args.command == "torch-smoke":
+        try:
+            gate = build_torch_backend_smoke_gate(
+                route_ids=args.route,
+                run_smoke=args.run_smoke,
+                allow_gpu=args.allow_gpu,
+                min_free_vram_mb=args.min_free_vram_mb,
+            )
+        except ValueError as exc:
+            print(f"Torch smoke error: {exc}", file=sys.stderr)
+            return 1
+        if args.json:
+            import json
+
+            print(json.dumps(gate, ensure_ascii=False, indent=2))
+        else:
+            print(format_torch_smoke_gate_markdown(gate))
+        return 1 if gate["summary"]["failed"] else 0
     if args.command == "model-smoke":
         try:
             plan = build_model_smoke_plan(
