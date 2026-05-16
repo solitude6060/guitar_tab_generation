@@ -58,6 +58,8 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 | P18 Basic Pitch Local Backend MVP | `feature/basic-pitch-backend` | 接入第一個真實本機 AI note backend | `transcribe --backend basic-pitch` 產生非 fixture notes artifact |
 | P19 Torch-first AI Backend Roadmap | `feature/torch-first-backend-roadmap` | 建立 PyTorch route 抽象與安全 smoke gate | `torch-backends` / `torch-smoke` 可用且不自動安裝 |
 | P20 torchcrepe F0 Calibration Adapter | `feature/torchcrepe-f0-calibration` | 從既有 artifact 產生 F0 calibration metadata | `f0-calibrate` outputs `f0_calibration.json` |
+| P21 F0 Calibration Consumption | `feature/f0-calibration-consumption` | viewer/interface/tutorial 消費 F0 calibration | pitch-risk notes visible in user-facing artifacts |
+| P22-P40 Remaining Feature Master Plan | see `docs/plans/remaining-feature-master-plan-20260516.md` | 完成剩餘產品化路線 | each phase has PRD/test spec before implementation |
 
 ## 3. Recommended Ralph commands
 
@@ -181,4 +183,17 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 
 ```text
 使用 Ralph 完成 P20：依照 docs/plans/p20-torchcrepe-f0-calibration-prd-20260516.md 與 docs/plans/p20-torchcrepe-f0-calibration-test-spec-20260516.md，實作 artifact-first `f0-calibrate` CLI，使用 optional torchcrepe runtime 將 `audio_normalized.wav` 與 `notes.json` 轉成 `f0_calibration.json`；不替換 Basic Pitch、不自動安裝 Torch heavy dependencies，預設 CPU；嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
+```
+
+
+### P21
+
+```text
+使用 Ralph 完成 P21：依照 docs/plans/p21-f0-calibration-consumption-prd-20260516.md 與 docs/plans/p21-f0-calibration-consumption-test-spec-20260516.md，將 f0_calibration.json 整合進 viewer/interface/tutorial，讓低 pitch confidence 與 delta_semitones 可被使用者看見；保留 P20 sidecar 行為，不新增 heavy dependency；嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
+```
+
+### P22-P40 Master Plan
+
+```text
+使用 Ralph 依序完成 P22-P40：以 docs/plans/remaining-feature-master-plan-20260516.md 為總路線圖，每階段先建立 PRD/test-spec，再 TDD 實作、驗證、PR review、merge dev、驗證、merge main；不得跳過 heavy dependency gate，不得追蹤 .omx，不得加入 OmX co-author。
 ```
