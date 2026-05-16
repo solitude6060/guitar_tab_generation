@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .artifact_viewer import ArtifactBundle, load_artifact_bundle
+from .artifact_viewer import ArtifactBundle, load_artifact_bundle, summarize_f0_calibration
 
 
 def _format_confidence(value: object) -> str:
@@ -51,6 +51,34 @@ def _readiness(arrangement: dict[str, Any], quality_report: dict[str, Any]) -> s
     if status == "passed":
         return "Practice-usable, but review confidence and warnings before increasing speed."
     return "Not practice-ready. Fix hard quality failures before using this as a lesson."
+
+
+def _format_signed(value: object) -> str:
+    if isinstance(value, (int, float)):
+        return f"{float(value):+.2f}"
+    return "unknown"
+
+
+def _f0_practice_lines(f0_calibration: dict[str, Any] | None) -> list[str]:
+    summary = summarize_f0_calibration(f0_calibration)
+    if not summary["available"]:
+        return []
+
+    lines = [
+        "",
+        "## Pitch calibration practice",
+        f"- Pitch-risk notes: {summary['risk_count']} / {summary['total_notes']}",
+    ]
+    if summary["risk_notes"]:
+        lines.append("- Slow down and isolate these notes before full-tempo practice:")
+        for note in summary["risk_notes"][:8]:
+            note_id = note.get("note_id", "unknown")
+            delta = _format_signed(note.get("delta_semitones"))
+            confidence = _format_confidence(note.get("periodicity_confidence"))
+            lines.append(f"  - {note_id}: delta {delta} semitones, periodicity {confidence}. Sing or hum the target pitch, then replay at 50% tempo.")
+    else:
+        lines.append("- No pitch-risk notes detected; keep normal tempo ladder practice.")
+    return lines
 
 
 def render_practice_tutorial_markdown(bundle: ArtifactBundle) -> str:
@@ -112,6 +140,11 @@ def render_practice_tutorial_markdown(bundle: ArtifactBundle) -> str:
         f"- Note sketch: {_pitch_sketch(notes)}",
         "- Clap or count the rhythm first, then play only the first two notes until timing is stable.",
         "- Add one note at a time; do not speed up while any position feels uncertain.",
+    ])
+
+    lines.extend(_f0_practice_lines(bundle.f0_calibration))
+
+    lines.extend([
         "",
         "## Safety note",
         "- This tutorial is generated from confidence-scored artifacts. Manually confirm low-confidence notes, chords, sections, and fingerings before treating them as final.",
