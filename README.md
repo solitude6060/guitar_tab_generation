@@ -93,6 +93,11 @@ For the first real AI backend path, see:
 - `docs/basic-pitch-backend.md`
 - `docs/basic-pitch-backend.zh-TW.md`
 
+For the Torch-first AI backend roadmap and smoke gate, see:
+
+- `docs/torch-first-ai-backend-roadmap.md`
+- `docs/torch-first-ai-backend-roadmap.zh-TW.md`
+
 ## Verification
 
 Run the available checks from the repository root:

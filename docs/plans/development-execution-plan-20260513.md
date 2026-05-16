@@ -56,6 +56,7 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 | P16 DAW Multi-track Export Bundle | `feature/daw-multitrack-export` | 產生 GarageBand / Logic 可直接匯入的多軌 bundle | `export --format daw` + `daw_bundle` 檢核 |
 | P17 DAW Workflow Usability | `feature/daw-workflow-usability` | 將 DAW 匯出導入更好用介面與教學動線（含 `interface`） | 介面顯示 DAW 匯出策略與檔案導引 |
 | P18 Basic Pitch Local Backend MVP | `feature/basic-pitch-backend` | 接入第一個真實本機 AI note backend | `transcribe --backend basic-pitch` 產生非 fixture notes artifact |
+| P19 Torch-first AI Backend Roadmap | `feature/torch-first-backend-roadmap` | 建立 PyTorch route 抽象與安全 smoke gate | `torch-backends` / `torch-smoke` 可用且不自動安裝 |
 
 ## 3. Recommended Ralph commands
 
@@ -167,4 +168,10 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 
 ```text
 使用 Ralph 完成 P18：依照 docs/plans/p18-basic-pitch-local-backend-prd-20260516.md 與 docs/plans/p18-basic-pitch-local-backend-test-spec-20260516.md，下載並接入 Basic Pitch 作為第一個真實本機 AI note backend，讓 `transcribe --backend basic-pitch` 可用；保留 fixture 為 deterministic default，嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
+```
+
+### P19
+
+```text
+使用 Ralph 完成 P19：依照 docs/plans/p19-torch-first-ai-backend-roadmap-prd-20260516.md 與 docs/plans/p19-torch-first-ai-backend-roadmap-test-spec-20260516.md，建立 Torch-first AI backend roadmap、PyTorch route 抽象、模型選型文件、GPU/CPU gate 與 smoke CLI；不替換 Basic Pitch、不新增未被 production code 直接呼叫的 heavy dependency；嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
 ```
