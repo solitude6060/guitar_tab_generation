@@ -16,6 +16,15 @@ ai = [
     "basic-pitch>=0.4.0",
     "setuptools>=68,<81",
 ]
+torch-ai = [
+    "torch>=2.11,<2.12",
+    "torchaudio>=2.11,<2.12",
+    "torchcrepe>=0.0.24,<0.1",
+    "demucs>=4.0.1,<5",
+]
+
+[tool.uv]
+default-groups = ["dev"]
 
 [project.scripts]
 guitar-tab-generation = "guitar_tab_generation.cli:main"
