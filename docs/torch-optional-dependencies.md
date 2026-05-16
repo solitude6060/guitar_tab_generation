@@ -14,7 +14,7 @@ The project sets `tool.uv.default-groups = ["dev"]`; default development does no
 
 ## What `torch-ai` contains
 
-- `torch` and `torchaudio`: shared PyTorch runtime packages.
+- `torch`, `torchaudio`, and `torchcodec`: shared PyTorch runtime/audio loading packages.
 - `torchcrepe`: used by `guitar-tab-generation f0-calibrate` after explicit installation.
 - `Demucs`: planned stem separation runtime for P25.
 
@@ -39,13 +39,19 @@ For CUDA-specific PyTorch wheels, choose the PyTorch index that matches the loca
 
 ## After installation
 
-CPU-safe route smoke:
+CPU-safe real route smoke. This creates a tiny local smoke artifact in the model cache and writes `f0_calibration.json`:
 
 ```bash
-uv run guitar-tab-generation torch-smoke --route torchcrepe-f0 --run
+uv run guitar-tab-generation torch-smoke --route torchcrepe-f0 --run --device cpu --json
 ```
 
-GPU-sensitive checks should be explicit and guarded on shared RTX 4090 hosts:
+GPU-sensitive torchcrepe checks should be explicit and guarded on shared RTX 4090 hosts:
+
+```bash
+GPU_TESTS_ENABLED=1 uv run guitar-tab-generation torch-smoke --route torchcrepe-f0 --run --device cuda --allow-gpu --min-free-vram-mb 4000 --json
+```
+
+Demucs remains a later route and should use the larger VRAM guard:
 
 ```bash
 GPU_TESTS_ENABLED=1 uv run guitar-tab-generation torch-smoke --route demucs-htdemucs --run --allow-gpu --min-free-vram-mb 12000

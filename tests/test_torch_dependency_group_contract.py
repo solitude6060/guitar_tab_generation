@@ -18,6 +18,7 @@ def test_torch_ai_dependency_group_is_optional_and_route_scoped() -> None:
     torch_ai = groups["torch-ai"]
     assert any(dep.startswith("torch>=") for dep in torch_ai)
     assert any(dep.startswith("torchaudio>=") for dep in torch_ai)
+    assert any(dep.startswith("torchcodec>=") for dep in torch_ai)
     assert any(dep.startswith("torchcrepe>=") for dep in torch_ai)
     assert any(dep.startswith("demucs>=") for dep in torch_ai)
     assert not set(torch_ai) & set(groups["dev"])
