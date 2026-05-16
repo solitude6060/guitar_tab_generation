@@ -1,6 +1,7 @@
 """Static HTML interface generation from existing transcription artifacts."""
 from __future__ import annotations
 
+import json
 from html import escape
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,62 @@ def _unique_chords(chords: list[dict[str, Any]]) -> str:
         if label and (not labels or labels[-1] != label):
             labels.append(label)
     return " → ".join(escape(label) for label in labels) if labels else "No chord progression found"
+
+
+def _render_daw_track_item(bundle: ArtifactBundle, track: dict[str, Any]) -> str:
+    midi = str(track.get("midi", "")).strip()
+    musicxml = str(track.get("musicxml", "")).strip()
+    name = escape(str(track.get("name", "Track")))
+
+    if not midi or not musicxml:
+        return "<li>Invalid DAW track entry</li>"
+
+    return (
+        f"<li>{name}: "
+        f"{_artifact_link(bundle, f'daw_bundle/{midi}')} "
+        f"/ {_artifact_link(bundle, f'daw_bundle/{musicxml}')}</li>"
+    )
+
+
+def _format_daw_bundle_section(bundle: ArtifactBundle) -> str:
+    daw_dir = bundle.artifact_dir / "daw_bundle"
+    if not daw_dir.exists():
+        return (
+            "<p>尚未建立 DAW 匯出包。</p>"
+            "<p>可執行：<code>guitar-tab-generation export . --format daw</code></p>"
+        )
+
+    manifest_path = daw_dir / "daw_manifest.json"
+    tracks: list[dict[str, Any]] = []
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            tracks = list(manifest.get("tracks", []))
+            strategy = manifest.get("strategy", "chunked_full_song")
+        except json.JSONDecodeError:
+            tracks = []
+            strategy = "unknown"
+    else:
+        strategy = "unknown"
+
+    if not tracks:
+        tracks = []
+        for midi_file in sorted(daw_dir.glob("track-*.mid")):
+            stem = midi_file.stem
+            musicxml_file = daw_dir / f"{stem}.musicxml"
+            tracks.append({"name": stem, "midi": midi_file.name, "musicxml": musicxml_file.name})
+
+    track_items = "".join(_render_daw_track_item(bundle, track) for track in tracks) or "<li>No tracks found in DAW bundle.</li>"
+
+    return (
+        f"<p><strong>DAW 匯出策略：</strong>{escape(str(strategy))}</p>"
+        f"<ul>{track_items}</ul>"
+        "<p>建議匯入步驟：</p>"
+        "<ol>"
+        "<li>開啟 GarageBand / Logic 專案</li>"
+        "<li>匯入 bundle 中對應的 <code>.mid</code> 或 <code>.musicxml</code> 檔案</li>"
+        "</ol>"
+    )
 
 
 def render_artifact_interface_html(bundle: ArtifactBundle) -> str:
@@ -108,6 +165,11 @@ def render_artifact_interface_html(bundle: ArtifactBundle) -> str:
       <li>{_artifact_link(bundle, 'viewer.md')}</li>
       <li>{_artifact_link(bundle, 'tutorial.md')}</li>
     </ul>
+  </section>
+
+  <section>
+    <h2>DAW 匯入</h2>
+    {_format_daw_bundle_section(bundle)}
   </section>
 </body>
 </html>
