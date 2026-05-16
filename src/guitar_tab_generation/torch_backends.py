@@ -35,6 +35,8 @@ class TorchBackendRoute:
     cpu_allowed: bool
     gpu_sensitive: bool
     integration_phase: str
+    dependency_group: str | None
+    install_hint: str
     smoke_command_template: tuple[str, ...]
     notes: str
     local_first: bool = True
@@ -84,6 +86,8 @@ def selected_torch_backend_routes() -> list[dict[str, Any]]:
             cpu_allowed=True,
             gpu_sensitive=True,
             integration_phase="P20 candidate",
+            dependency_group="torch-ai",
+            install_hint="uv sync --group torch-ai",
             smoke_command_template=(sys.executable, "-c", "import torch, torchcrepe; print('torchcrepe-ok')"),
             notes="Useful as a calibration lane, not a replacement for polyphonic note transcription.",
         ),
@@ -99,6 +103,8 @@ def selected_torch_backend_routes() -> list[dict[str, Any]]:
             cpu_allowed=False,
             gpu_sensitive=True,
             integration_phase="P20/P21 candidate",
+            dependency_group="torch-ai",
+            install_hint="uv sync --group torch-ai",
             smoke_command_template=("demucs", "--help"),
             notes="GPU-sensitive; run sequentially on shared RTX 4090 hosts.",
         ),
@@ -114,6 +120,8 @@ def selected_torch_backend_routes() -> list[dict[str, Any]]:
             cpu_allowed=False,
             gpu_sensitive=True,
             integration_phase="Research candidate after P20 smoke evidence",
+            dependency_group=None,
+            install_hint="not packaged yet; select a concrete checkpoint before adding dependencies",
             smoke_command_template=(sys.executable, "-c", "import torch, transformers; print('mt3-route-ok')"),
             notes="Roadmap candidate only; do not install until a concrete model checkpoint and adapter are selected.",
         ),
@@ -282,15 +290,16 @@ def format_torch_backend_status_markdown(status: dict[str, Any]) -> str:
         "- 不自動安裝：只有後續 phase 的 production code 直接呼叫時，才新增對應 dependency。",
         f"- Default backend policy: {status['default_backend_policy']}",
         "",
-        "| Route | Stage | Runtime | 狀態 | GPU 門檻 | 下一步 |",
-        "|---|---|---|---|---:|---|",
+        "| Route | Stage | Runtime | Dependency group | 狀態 | GPU 門檻 | 下一步 |",
+        "|---|---|---|---|---|---:|---|",
     ]
     for route in status["routes"]:
         imports = ", ".join(route["python_imports"])
         gpu = f"{route['min_free_vram_mb']} MB" if route["gpu_sensitive"] else "CPU"
         state = "可用" if route["runtime_available"] else "規劃中"
+        dependency_group = route["dependency_group"] or "未封裝"
         lines.append(
-            f"| {route['label']} | {route['stage']} | {imports} | {state} | {gpu} | {route['next_action']} |"
+            f"| {route['label']} | {route['stage']} | {imports} | {dependency_group} | {state} | {gpu} | {route['next_action']} |"
         )
     lines.append("")
     return "\n".join(lines)
