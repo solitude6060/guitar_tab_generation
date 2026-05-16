@@ -43,6 +43,39 @@ def test_render_artifact_interface_html_escapes_and_links_artifacts(tmp_path: Pa
     assert "tab.md" in html
     assert "viewer.md" in html
     assert "tutorial.md" in html
+    assert "DAW 匯入" in html
+    assert "尚未建立 DAW 匯出包" in html
+    assert "guitar-tab-generation export . --format daw" in html
+
+
+def test_render_artifact_interface_html_uses_daw_manifest(tmp_path: Path) -> None:
+    _write_bundle(tmp_path)
+    daw_dir = tmp_path / "daw_bundle"
+    daw_dir.mkdir()
+    (daw_dir / "daw_manifest.json").write_text(
+        json.dumps(
+            {
+                "strategy": "chunked_full_song",
+                "tracks": [
+                    {"name": "track-01", "midi": "track-01.mid", "musicxml": "track-01.musicxml"},
+                    {"name": "track-02", "midi": "track-02.mid", "musicxml": "track-02.musicxml"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (daw_dir / "track-01.mid").write_text("MThd", encoding="utf-8")
+    (daw_dir / "track-01.musicxml").write_text("<score-partwise></score-partwise>", encoding="utf-8")
+    (daw_dir / "track-02.mid").write_text("MThd", encoding="utf-8")
+    (daw_dir / "track-02.musicxml").write_text("<score-partwise></score-partwise>", encoding="utf-8")
+
+    html = render_artifact_interface_html(load_artifact_bundle(tmp_path))
+
+    assert "DAW 匯出策略" in html
+    assert "chunked_full_song" in html
+    assert "track-01.mid" in html
+    assert "track-02.musicxml" in html
+    assert "GarageBand" in html
 
 
 def test_write_artifact_interface_defaults_to_artifact_dir(tmp_path: Path) -> None:

@@ -53,6 +53,8 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 | P13 Local AI Backend Registry | `feature/local-ai-backend-registry` | 建立本機 AI backend/model route 可檢查狀態 | `ai-backends` CLI lists Basic Pitch/Demucs/torchcrepe/Essentia/local LLM |
 | P14 Docker Compose Local AI Runtime | `feature/docker-compose-ai-runtime` | 建立 dev/gpu-ai/llm/cloud-backup compose profiles | `docker compose config`; dev image supports uv/ffmpeg CLI |
 | P15 Model Download Smoke Harness | `feature/model-download-smoke-harness` | 安全、可重現的本機模型下載/整合 smoke harness | 預設不下載/不使用 GPU；opt-in + VRAM guard |
+| P16 DAW Multi-track Export Bundle | `feature/daw-multitrack-export` | 產生 GarageBand / Logic 可直接匯入的多軌 bundle | `export --format daw` + `daw_bundle` 檢核 |
+| P17 DAW Workflow Usability | `feature/daw-workflow-usability` | 將 DAW 匯出導入更好用介面與教學動線（含 `interface`） | 介面顯示 DAW 匯出策略與檔案導引 |
 
 ## 3. Recommended Ralph commands
 
@@ -146,4 +148,16 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 
 ```text
 使用 Ralph 完成 P15：依照 docs/plans/p15-model-download-smoke-harness-prd-20260515.md 與 docs/plans/p15-model-download-smoke-harness-test-spec-20260515.md，新增 safe model-smoke CLI；預設不下載、不使用 GPU，只有 --download / MODEL_SMOKE_DOWNLOAD=1 與 --allow-gpu / GPU_TESTS_ENABLED=1 才執行；必須檢查 GPU free VRAM，VRAM 不足時 skip；嚴格 SDD/TDD/git flow，用 uv。
+```
+
+### P16
+
+```text
+使用 Ralph 完成 P16：依照 docs/plans/p16-daw-multitrack-export-prd-20260516.md 與 docs/plans/p16-daw-multitrack-export-test-spec-20260516.md，實作 `export --format daw`，讓 chunked_full_song 轉譯可直接匯入 GarageBand / Logic 的可管理多軌 bundle；保留既有 musicxml/midi 行為；嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
+```
+
+### P17
+
+```text
+使用 Ralph 完成 P17：依照 docs/plans/p17-daw-workflow-usability-prd-20260516.md 與 docs/plans/p17-daw-workflow-usability-test-spec-20260516.md，完成 DAW 匯出可用性強化（interface 顯示 DAW 匯入策略與可匯入檔、操作步驟文字）並補上對應單元/E2E 測試；嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
 ```

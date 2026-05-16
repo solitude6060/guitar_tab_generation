@@ -45,10 +45,15 @@ def build_parser() -> argparse.ArgumentParser:
     interface.add_argument(
         "--out", type=Path, default=None, help="Output HTML path; defaults to <artifact_dir>/interface.html"
     )
-    export = subparsers.add_parser("export", help="Export MusicXML or MIDI from an artifact directory")
+    export = subparsers.add_parser("export", help="Export MusicXML / MIDI or DAW bundle from an artifact directory")
     export.add_argument("artifact_dir", type=Path)
-    export.add_argument("--format", choices=["musicxml", "midi"], required=True)
-    export.add_argument("--out", type=Path, default=None, help="Output path; defaults to score.musicxml or score.mid")
+    export.add_argument("--format", choices=["musicxml", "midi", "daw"], required=True)
+    export.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Output path; defaults to score.musicxml, score.mid, or daw_bundle",
+    )
     doctor_ai = subparsers.add_parser("doctor-ai", help="Inspect local AI runtime readiness")
     doctor_ai.add_argument("--json", action="store_true", help="Output machine-readable JSON")
     subparsers.add_parser("ai-resources", help="Print the local 4090 AI resource plan with MiniMax backup policy")
