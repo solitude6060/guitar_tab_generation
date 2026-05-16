@@ -109,6 +109,11 @@ Basic Pitch backend 使用說明請見：
 - `docs/basic-pitch-backend.md`
 - `docs/basic-pitch-backend.zh-TW.md`
 
+Torch-first 後續 AI backend 路線與 smoke gate 請見：
+
+- `docs/torch-first-ai-backend-roadmap.md`
+- `docs/torch-first-ai-backend-roadmap.zh-TW.md`
+
 ## 驗證
 
 從 repo root 執行：
