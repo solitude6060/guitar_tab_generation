@@ -26,10 +26,10 @@ def transcribe_to_tab(
     trim_end: float | None = None,
     backend: str | AnalysisBackend | None = None,
 ) -> tuple[dict, dict]:
-    analysis_backend = resolve_backend(backend)
     audio_input = resolve_local_audio(input_uri, trim_start=trim_start, trim_end=trim_end)
     fixture_metadata = load_fixture_metadata(audio_input.path)
     normalized = normalize_audio(audio_input, out_dir)
+    analysis_backend = resolve_backend(backend, audio_path=Path(normalized["path"]))
     rhythm = analysis_backend.safe_analyze_rhythm(audio_input.duration_seconds, fixture_metadata)
 
     source = {

@@ -20,6 +20,7 @@
 - **吉他範圍**：標準調弦 EADGBE、string 1–6、fret 0–20。
 - **非目標**：任意 YouTube 下載、alternate tuning、PDF 必備輸出、專有 DAW session 直接輸出、完整教學課程、逐音完美或原演奏者指法保證。
 - **可選 DAW 匯出**：`--format daw` 可輸出可直接提供 GarageBand / Logic 匯入的多軌目錄（依 full-song chunk 計畫分軌）。
+- **可選 AI Backend**：同步 `ai` dependency group 後，可使用 `--backend basic-pitch` 啟用第一個真實本機 note transcription backend。
 
 ## 輸入政策 guardrail
 
@@ -102,6 +103,11 @@ DAW 匯出使用說明請見：
 
 - `docs/daw-bundle-export.md`
 - `docs/daw-bundle-export.zh-TW.md`
+
+Basic Pitch backend 使用說明請見：
+
+- `docs/basic-pitch-backend.md`
+- `docs/basic-pitch-backend.zh-TW.md`
 
 ## 驗證
 

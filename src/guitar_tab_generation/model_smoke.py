@@ -73,7 +73,7 @@ def _selected_smoke_specs(cache_root: Path) -> list[ModelSmokeSpec]:
                 str(cache_root / "basic-pitch"),
             ),
             gpu_sensitive=False,
-            notes="Package download only; inference remains a later opt-in backend phase.",
+            notes="Package/runtime route for the implemented transcribe --backend basic-pitch path.",
         ),
         ModelSmokeSpec(
             id="demucs",

@@ -26,7 +26,11 @@ def build_parser() -> argparse.ArgumentParser:
     transcribe.add_argument("--out", required=True, type=Path)
     transcribe.add_argument("--trim-start", type=float, default=None)
     transcribe.add_argument("--trim-end", type=float, default=None)
-    transcribe.add_argument("--backend", default="fixture", help="Analysis backend to use; MVP default is fixture.")
+    transcribe.add_argument(
+        "--backend",
+        default="fixture",
+        help="Analysis backend to use; available: fixture, basic-pitch. Default is fixture.",
+    )
     transcribe.add_argument(
         "--i-own-rights",
         action="store_true",
