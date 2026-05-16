@@ -117,7 +117,9 @@ def collect_ai_backend_status(
             "available": available,
             "status": status,
             "next_action": (
-                "ready for optional backend integration"
+                "ready for transcribe --backend basic-pitch"
+                if spec["id"] == "basic-pitch" and available
+                else "ready for optional backend integration"
                 if available
                 else "install locally only when this backend phase starts; do not add secrets or cloud fallback"
             ),

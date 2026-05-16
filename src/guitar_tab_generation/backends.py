@@ -6,6 +6,7 @@ CI and golden fixtures stay reproducible.
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 from .rhythm_analysis import analyze_rhythm
@@ -126,15 +127,23 @@ class FixtureAnalysisBackend:
             raise BackendExecutionError(f"{self.name} section backend failed: {exc}") from exc
 
 
-def resolve_backend(name: str | AnalysisBackend | None = None) -> AnalysisBackend:
+def resolve_backend(
+    name: str | AnalysisBackend | None = None,
+    *,
+    audio_path: Path | None = None,
+) -> AnalysisBackend:
     """Resolve an analysis backend by name without importing heavy optional deps."""
     if name is None or name == "fixture":
         return FixtureAnalysisBackend()
     if not isinstance(name, str):
         return name
-    if name in {"real", "basic-pitch", "librosa"}:
+    if name == "basic-pitch":
+        from .basic_pitch_backend import BasicPitchAnalysisBackend
+
+        return BasicPitchAnalysisBackend(audio_path=audio_path)
+    if name in {"real", "librosa"}:
         raise BackendExecutionError(
             f"Optional backend {name!r} is not installed or enabled in the MVP. "
             "Use backend 'fixture' or add an ADR before introducing heavy dependencies."
         )
-    raise BackendExecutionError(f"Unknown analysis backend {name!r}. Available backend: fixture.")
+    raise BackendExecutionError(f"Unknown analysis backend {name!r}. Available backends: fixture, basic-pitch.")

@@ -55,6 +55,7 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 | P15 Model Download Smoke Harness | `feature/model-download-smoke-harness` | 安全、可重現的本機模型下載/整合 smoke harness | 預設不下載/不使用 GPU；opt-in + VRAM guard |
 | P16 DAW Multi-track Export Bundle | `feature/daw-multitrack-export` | 產生 GarageBand / Logic 可直接匯入的多軌 bundle | `export --format daw` + `daw_bundle` 檢核 |
 | P17 DAW Workflow Usability | `feature/daw-workflow-usability` | 將 DAW 匯出導入更好用介面與教學動線（含 `interface`） | 介面顯示 DAW 匯出策略與檔案導引 |
+| P18 Basic Pitch Local Backend MVP | `feature/basic-pitch-backend` | 接入第一個真實本機 AI note backend | `transcribe --backend basic-pitch` 產生非 fixture notes artifact |
 
 ## 3. Recommended Ralph commands
 
@@ -160,4 +161,10 @@ uv run guitar-tab-generation transcribe fixtures/single_note_lead_30_90s.wav --b
 
 ```text
 使用 Ralph 完成 P17：依照 docs/plans/p17-daw-workflow-usability-prd-20260516.md 與 docs/plans/p17-daw-workflow-usability-test-spec-20260516.md，完成 DAW 匯出可用性強化（interface 顯示 DAW 匯入策略與可匯入檔、操作步驟文字）並補上對應單元/E2E 測試；嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
+```
+
+### P18
+
+```text
+使用 Ralph 完成 P18：依照 docs/plans/p18-basic-pitch-local-backend-prd-20260516.md 與 docs/plans/p18-basic-pitch-local-backend-test-spec-20260516.md，下載並接入 Basic Pitch 作為第一個真實本機 AI note backend，讓 `transcribe --backend basic-pitch` 可用；保留 fixture 為 deterministic default，嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
 ```

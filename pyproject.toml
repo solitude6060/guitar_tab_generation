@@ -12,6 +12,10 @@ requires-python = ">=3.11"
 dev = [
     "pytest>=8.0",
 ]
+ai = [
+    "basic-pitch>=0.4.0",
+    "setuptools>=68,<81",
+]
 
 [project.scripts]
 guitar-tab-generation = "guitar_tab_generation.cli:main"
