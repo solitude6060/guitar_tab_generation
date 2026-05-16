@@ -16,6 +16,9 @@ def test_torch_backend_routes_are_roadmap_only_and_local_first() -> None:
     assert all(route["framework"] == "pytorch" for route in routes)
     assert all(route["local_first"] is True for route in routes)
     assert all(route["auto_install"] is False for route in routes)
+    torch_ai_routes = [route for route in routes if route["id"] in {"torchcrepe-f0", "demucs-htdemucs"}]
+    assert {route["dependency_group"] for route in torch_ai_routes} == {"torch-ai"}
+    assert all("uv sync --group torch-ai" in route["install_hint"] for route in torch_ai_routes)
 
 
 def test_torch_backend_status_uses_injected_probes_without_importing_torch() -> None:
@@ -98,3 +101,4 @@ def test_torch_backend_markdown_is_traditional_chinese() -> None:
     assert "不取代 Basic Pitch" in markdown
     assert "本機優先" in markdown
     assert "不自動安裝" in markdown
+    assert "torch-ai" in markdown
