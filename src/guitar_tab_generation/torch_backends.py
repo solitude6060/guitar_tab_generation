@@ -8,17 +8,22 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import importlib.util
-from pathlib import Path
+import json
+import math
 import os
+from pathlib import Path
 import shutil
+import struct
 import subprocess
 import sys
+import wave
 from typing import Any, Callable, Mapping, Sequence
 
 
 CommandExists = Callable[[str], bool]
 ImportExists = Callable[[str], bool]
 CommandRunner = Callable[[list[str]], tuple[int, str, str]]
+RuntimeLoader = Callable[[], Any]
 TRUE_VALUES = {"1", "true", "yes", "on"}
 
 
@@ -68,6 +73,60 @@ def _default_cache_root(env: Mapping[str, str]) -> Path:
     if configured:
         return Path(configured).expanduser()
     return Path.home() / ".cache" / "guitar-tab-generation" / "torch-models"
+
+
+def _write_smoke_wav(path: Path, *, sample_rate: int = 16_000, duration_seconds: float = 0.25) -> None:
+    """Write a tiny C4 sine fixture using only the Python standard library."""
+
+    frame_count = int(sample_rate * duration_seconds)
+    frequency_hz = 261.63
+    amplitude = 0.2
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(path), "wb") as wav_file:
+        wav_file.setnchannels(1)
+        wav_file.setsampwidth(2)
+        wav_file.setframerate(sample_rate)
+        for index in range(frame_count):
+            value = int(amplitude * 32767 * math.sin(2 * math.pi * frequency_hz * index / sample_rate))
+            wav_file.writeframes(struct.pack("<h", value))
+
+
+def _prepare_torchcrepe_smoke_artifact(artifact_dir: Path) -> None:
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    _write_smoke_wav(artifact_dir / "audio_normalized.wav")
+    notes = [{"id": "smoke-c4", "start": 0.0, "end": 0.25, "pitch_midi": 60}]
+    (artifact_dir / "notes.json").write_text(json.dumps(notes, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def run_torchcrepe_f0_runtime_smoke(
+    cache_dir: Path,
+    *,
+    device: str = "cpu",
+    runtime_loader: RuntimeLoader | None = None,
+) -> dict[str, Any]:
+    """Run the real torchcrepe F0 path on a tiny local fixture.
+
+    The optional torchcrepe runtime is imported only through
+    `write_f0_calibration()`, so default dev/CI can import this module without
+    installing PyTorch or torchcrepe.
+    """
+
+    from .torchcrepe_f0 import load_torchcrepe_runtime, write_f0_calibration
+
+    artifact_dir = cache_dir / "torchcrepe-f0-runtime-smoke"
+    _prepare_torchcrepe_smoke_artifact(artifact_dir)
+    output_path = write_f0_calibration(
+        artifact_dir,
+        device=device,
+        model="tiny",
+        runtime_loader=runtime_loader or load_torchcrepe_runtime,
+    )
+    return {
+        "status": "ready",
+        "device": device,
+        "artifact_dir": str(artifact_dir),
+        "f0_calibration_path": str(output_path),
+    }
 
 
 def selected_torch_backend_routes() -> list[dict[str, Any]]:
@@ -191,7 +250,9 @@ def build_torch_backend_smoke_gate(
     run_smoke: bool | None = None,
     allow_gpu: bool | None = None,
     min_free_vram_mb: int | None = None,
+    torch_device: str = "cpu",
     run_command: CommandRunner = _default_runner,
+    torchcrepe_runtime_loader: RuntimeLoader | None = None,
 ) -> dict[str, Any]:
     """Build and optionally execute safe Torch route smoke gates."""
 
@@ -211,7 +272,12 @@ def build_torch_backend_smoke_gate(
         threshold_override = int(raw_threshold) if raw_threshold and raw_threshold.isdigit() else None
     cache_root = _default_cache_root(env_map)
 
-    gpu_needed = any(route["gpu_sensitive"] and route["id"] in selected for route in routes)
+    gpu_needed = any(
+        route["gpu_sensitive"]
+        and route["id"] in selected
+        and not (route["id"] == "torchcrepe-f0" and torch_device == "cpu")
+        for route in routes
+    )
     free_vram_mb: int | None = None
     total_vram_mb: int | None = None
     gpu_probe_error: str | None = None
@@ -222,36 +288,69 @@ def build_torch_backend_smoke_gate(
     for route in routes:
         if route["id"] not in selected:
             continue
+        route_requires_gpu = route["gpu_sensitive"] and not (route["id"] == "torchcrepe-f0" and torch_device == "cpu")
         route_threshold = (
             int(threshold_override)
-            if threshold_override is not None and route["gpu_sensitive"]
+            if threshold_override is not None and route_requires_gpu
             else int(route["min_free_vram_mb"])
-            if route["gpu_sensitive"]
+            if route_requires_gpu
             else 0
         )
         step: dict[str, Any] = {
             **route,
             "cache_dir": str(cache_root / route["id"]),
+            "device": torch_device if route["id"] == "torchcrepe-f0" else None,
             "smoke_enabled": smoke_enabled,
             "gpu_enabled": gpu_enabled,
             "min_free_vram_mb": route_threshold,
-            "free_vram_mb": free_vram_mb if route["gpu_sensitive"] else None,
-            "total_vram_mb": total_vram_mb if route["gpu_sensitive"] else None,
-            "command": list(route["smoke_command_template"]),
+            "free_vram_mb": free_vram_mb if route_requires_gpu else None,
+            "total_vram_mb": total_vram_mb if route_requires_gpu else None,
+            "command": (
+                ["internal", "run_torchcrepe_f0_runtime_smoke", "--device", torch_device]
+                if route["id"] == "torchcrepe-f0"
+                else list(route["smoke_command_template"])
+            ),
             "command_executed": False,
             "returncode": None,
             "stdout": "",
             "stderr": "",
             "reason": "",
         }
-        if route["gpu_sensitive"] and not gpu_enabled and not route["cpu_allowed"]:
+        if route["id"] == "torchcrepe-f0" and torch_device == "cuda" and not gpu_enabled:
+            step.update({"status": "skipped", "reason": "torchcrepe CUDA smoke requires --allow-gpu or GPU_TESTS_ENABLED=1."})
+        elif route_requires_gpu and not gpu_enabled and not route["cpu_allowed"]:
             step.update({"status": "skipped", "reason": "GPU-sensitive Torch smoke requires --allow-gpu or GPU_TESTS_ENABLED=1."})
-        elif route["gpu_sensitive"] and gpu_enabled and gpu_probe_error:
+        elif route_requires_gpu and gpu_enabled and gpu_probe_error:
             step.update({"status": "skipped", "reason": f"GPU probe unavailable: {gpu_probe_error}."})
-        elif route["gpu_sensitive"] and gpu_enabled and (free_vram_mb is None or free_vram_mb < route_threshold):
+        elif route_requires_gpu and gpu_enabled and (free_vram_mb is None or free_vram_mb < route_threshold):
             step.update({"status": "skipped", "reason": f"Free VRAM is {free_vram_mb or 'unknown'} MB; requires at least {route_threshold} MB."})
         elif not smoke_enabled:
             step.update({"status": "planned", "reason": "預設不執行 Torch smoke；pass --run or TORCH_SMOKE_RUN=1."})
+        elif route["id"] == "torchcrepe-f0":
+            try:
+                result = run_torchcrepe_f0_runtime_smoke(
+                    Path(step["cache_dir"]),
+                    device=torch_device,
+                    runtime_loader=torchcrepe_runtime_loader,
+                )
+            except Exception as exc:  # pragma: no cover - real runtime failures are environment dependent
+                step.update({
+                    "command_executed": True,
+                    "returncode": 1,
+                    "stderr": str(exc),
+                    "status": "failed",
+                    "reason": "torchcrepe runtime smoke failed",
+                })
+            else:
+                step.update({
+                    "command_executed": True,
+                    "returncode": 0,
+                    "stdout": json.dumps(result, ensure_ascii=False),
+                    "status": "ready",
+                    "reason": "torchcrepe runtime smoke wrote f0_calibration.json",
+                    "artifact_dir": result["artifact_dir"],
+                    "f0_calibration_path": result["f0_calibration_path"],
+                })
         else:
             Path(step["cache_dir"]).mkdir(parents=True, exist_ok=True)
             code, stdout, stderr = run_command(step["command"])

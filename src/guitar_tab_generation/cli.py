@@ -92,6 +92,12 @@ def build_parser() -> argparse.ArgumentParser:
     torch_smoke.add_argument("--run", dest="run_smoke", action="store_true", help="Actually run smoke commands; default only plans")
     torch_smoke.add_argument("--allow-gpu", action="store_true", help="Allow GPU-sensitive smoke checks when VRAM guard passes")
     torch_smoke.add_argument("--min-free-vram-mb", type=int, default=None, help="Minimum free VRAM required for GPU-sensitive checks")
+    torch_smoke.add_argument(
+        "--device",
+        choices=["cpu", "cuda"],
+        default="cpu",
+        help="torchcrepe runtime smoke device; cuda requires --allow-gpu or GPU_TESTS_ENABLED=1",
+    )
     model_smoke = subparsers.add_parser("model-smoke", help="Plan or run safe opt-in local model download smoke checks")
     model_smoke.add_argument("--json", action="store_true", help="Output machine-readable JSON")
     model_smoke.add_argument("--backend", action="append", choices=available_backend_ids(), help="Backend to include; repeat to include multiple")
@@ -212,6 +218,7 @@ def main(argv: list[str] | None = None) -> int:
                 run_smoke=args.run_smoke,
                 allow_gpu=args.allow_gpu,
                 min_free_vram_mb=args.min_free_vram_mb,
+                torch_device=args.device,
             )
         except ValueError as exc:
             print(f"Torch smoke error: {exc}", file=sys.stderr)
