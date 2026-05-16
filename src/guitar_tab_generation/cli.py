@@ -22,6 +22,7 @@ from .torch_backends import (
     format_torch_backend_status_markdown,
     format_torch_smoke_gate_markdown,
 )
+from . import torchcrepe_f0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -64,6 +65,20 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Output path; defaults to score.musicxml, score.mid, or daw_bundle",
     )
+    f0_calibrate = subparsers.add_parser(
+        "f0-calibrate",
+        help="Calibrate existing note events against torchcrepe F0 frames",
+    )
+    f0_calibrate.add_argument("artifact_dir", type=Path)
+    f0_calibrate.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Output JSON path; defaults to <artifact_dir>/f0_calibration.json",
+    )
+    f0_calibrate.add_argument("--device", default="cpu", help="torchcrepe device; default is cpu")
+    f0_calibrate.add_argument("--model", choices=["tiny", "full"], default="tiny", help="torchcrepe model capacity")
+    f0_calibrate.add_argument("--hop-ms", type=float, default=5.0, help="Frame hop in milliseconds")
     doctor_ai = subparsers.add_parser("doctor-ai", help="Inspect local AI runtime readiness")
     doctor_ai.add_argument("--json", action="store_true", help="Output machine-readable JSON")
     subparsers.add_parser("ai-resources", help="Print the local 4090 AI resource plan with MiniMax backup policy")
@@ -143,6 +158,20 @@ def main(argv: list[str] | None = None) -> int:
             written = write_export(args.artifact_dir, args.format, args.out)
         except (ArtifactViewerError, ValueError) as exc:
             print(f"Export error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {written}")
+        return 0
+    if args.command == "f0-calibrate":
+        try:
+            written = torchcrepe_f0.write_f0_calibration(
+                args.artifact_dir,
+                out=args.out,
+                device=args.device,
+                model=args.model,
+                hop_ms=args.hop_ms,
+            )
+        except BackendExecutionError as exc:
+            print(f"F0 calibration error: {exc}", file=sys.stderr)
             return 1
         print(f"Wrote {written}")
         return 0

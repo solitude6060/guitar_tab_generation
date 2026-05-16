@@ -98,6 +98,11 @@ For the Torch-first AI backend roadmap and smoke gate, see:
 - `docs/torch-first-ai-backend-roadmap.md`
 - `docs/torch-first-ai-backend-roadmap.zh-TW.md`
 
+For torchcrepe F0 calibration, see:
+
+- `docs/torchcrepe-f0-calibration.md`
+- `docs/torchcrepe-f0-calibration.zh-TW.md`
+
 ## Verification
 
 Run the available checks from the repository root:
