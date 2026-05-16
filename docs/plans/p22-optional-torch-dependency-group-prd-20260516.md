@@ -38,7 +38,7 @@ P19 建立 Torch-first backend registry 與 smoke gate，P20 實作 `f0-calibrat
 版本策略：
 
 - PyPI metadata 於 2026-05-16 查核：`torchcrepe 0.0.24`、`demucs 4.0.1`、`torch 2.12.0`、`torchaudio 2.11.0`。
-- P22 採 `torch>=2.11,<2.12` 與 `torchaudio>=2.11,<2.12`，原因是 `torchaudio` wheel 通常需要與 `torch` minor version 對齊；目前 PyPI `torchaudio` 尚未對齊 `torch 2.12`。
+- P22 採 `torch>=2.11,<2.12` 與 `torchaudio>=2.11,<2.12`，原因是 `torchaudio` wheel 通常需要與 `torch` minor version 對齊；目前 PyPI `torchaudio` 尚未對齊 `torch 2.12`。P23 real smoke 顯示 torchcrepe audio loading 也需要 `torchcodec`，因此將其納入 `torch-ai` optional group。
 - CUDA wheel selection 不寫死在 `pyproject.toml`，避免跨平台不可重現；需要 CUDA 時由使用者明確選擇 PyTorch index 或本機環境。
 
 ## 5. 驗收標準
