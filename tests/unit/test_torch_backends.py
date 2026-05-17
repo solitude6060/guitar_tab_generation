@@ -75,7 +75,7 @@ def test_torch_smoke_gate_enforces_vram_before_gpu_sensitive_route() -> None:
     assert step["command_executed"] is False
 
 
-def test_torch_smoke_gate_uses_route_specific_vram_by_default() -> None:
+def test_torch_smoke_gate_uses_route_specific_vram_by_default(tmp_path: Path) -> None:
     from tests.unit.test_torchcrepe_f0 import FakeRuntime
 
     def runner(command: list[str]) -> tuple[int, str, str]:
@@ -84,7 +84,7 @@ def test_torch_smoke_gate_uses_route_specific_vram_by_default() -> None:
         return 0, "ok", ""
 
     gate = build_torch_backend_smoke_gate(
-        env={"GPU_TESTS_ENABLED": "1", "TORCH_SMOKE_RUN": "1"},
+        env={"MODEL_CACHE_DIR": str(tmp_path), "GPU_TESTS_ENABLED": "1", "TORCH_SMOKE_RUN": "1"},
         route_ids=["torchcrepe-f0"],
         torch_device="cuda",
         run_command=runner,
