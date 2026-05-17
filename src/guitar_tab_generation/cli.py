@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import sys
 
@@ -15,6 +16,7 @@ from .backends import BackendExecutionError
 from .demucs_runtime import build_demucs_runtime_gate, format_demucs_runtime_gate_markdown
 from .exporters import write_export
 from .input_adapter import InputError, PolicyGateError
+from .job_queue import JobQueueError, cancel_job, read_queue, resume_job, run_next_job, submit_job
 from .model_smoke import available_backend_ids, build_model_smoke_plan, format_model_smoke_markdown
 from .pipeline import transcribe_to_tab
 from .practice_tutorial import LocalLLMTutorialError, write_practice_tutorial
@@ -72,6 +74,43 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Output HTML path; defaults to <workspace_dir>/web-ui.html",
     )
+    jobs = subparsers.add_parser("jobs", help="Manage local workspace jobs")
+    job_subparsers = jobs.add_subparsers(dest="jobs_command", required=True)
+    jobs_submit = job_subparsers.add_parser("submit", help="Submit a local job spec without executing it")
+    jobs_submit.add_argument("workspace_dir", type=Path)
+    jobs_submit.add_argument("--job-id", default=None)
+    jobs_submit.add_argument(
+        "--command",
+        dest="job_command",
+        action="append",
+        required=True,
+        help="Command token; repeat for each token",
+    )
+    jobs_submit.add_argument("--gpu", action="store_true", help="Mark the job as GPU-sensitive")
+    jobs_submit.add_argument("--allow-gpu", action="store_true", help="Explicitly allow submitting a GPU-sensitive job")
+    jobs_submit.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    jobs_status = job_subparsers.add_parser("status", help="Show workspace job queue status")
+    jobs_status.add_argument("workspace_dir", type=Path)
+    jobs_status.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    jobs_run_next = job_subparsers.add_parser("run-next", help="Run the next queued job through the local scheduler")
+    jobs_run_next.add_argument("workspace_dir", type=Path)
+    jobs_run_next.add_argument("--allow-gpu", action="store_true", help="Allow GPU probe and lock acquisition")
+    jobs_run_next.add_argument("--min-free-vram-mb", type=int, default=12000)
+    jobs_run_next.add_argument(
+        "--fake-free-vram-mb",
+        type=int,
+        default=None,
+        help="Test-only fake GPU free VRAM value; avoids probing real GPU",
+    )
+    jobs_run_next.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    jobs_cancel = job_subparsers.add_parser("cancel", help="Cancel a queued, deferred, or running job")
+    jobs_cancel.add_argument("workspace_dir", type=Path)
+    jobs_cancel.add_argument("job_id")
+    jobs_cancel.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    jobs_resume = job_subparsers.add_parser("resume", help="Resume a canceled or deferred job")
+    jobs_resume.add_argument("workspace_dir", type=Path)
+    jobs_resume.add_argument("job_id")
+    jobs_resume.add_argument("--json", action="store_true", help="Output machine-readable JSON")
     export = subparsers.add_parser("export", help="Export MusicXML / MIDI or DAW bundle from an artifact directory")
     export.add_argument("artifact_dir", type=Path)
     export.add_argument("--format", choices=["musicxml", "midi", "daw"], required=True)
@@ -257,6 +296,8 @@ def main(argv: list[str] | None = None) -> int:
         written = write_web_ui(args.workspace_dir, args.out)
         print(f"Wrote {written}")
         return 0
+    if args.command == "jobs":
+        return _handle_jobs_command(args)
     if args.command == "export":
         try:
             written = write_export(args.artifact_dir, args.format, args.out)
@@ -422,6 +463,55 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if report["summary"]["status"] == "passed" else 3
     parser.error("unknown command")
     return 1
+
+
+def _print_json_or_summary(payload: dict, *, as_json: bool) -> None:
+    if as_json:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(json.dumps(payload, ensure_ascii=False))
+
+
+def _handle_jobs_command(args: argparse.Namespace) -> int:
+    fake_probe = None
+    if getattr(args, "fake_free_vram_mb", None) is not None:
+        fake_probe = lambda: (args.fake_free_vram_mb, 24564, None)
+    try:
+        if args.jobs_command == "submit":
+            payload = submit_job(
+                args.workspace_dir,
+                command=args.job_command,
+                job_id=args.job_id,
+                gpu_sensitive=args.gpu,
+                allow_gpu=args.allow_gpu,
+            )
+            _print_json_or_summary(payload, as_json=args.json)
+            return 0
+        if args.jobs_command == "status":
+            payload = read_queue(args.workspace_dir)
+            _print_json_or_summary(payload, as_json=args.json)
+            return 0
+        if args.jobs_command == "run-next":
+            payload = run_next_job(
+                args.workspace_dir,
+                allow_gpu=args.allow_gpu,
+                min_free_vram_mb=args.min_free_vram_mb,
+                gpu_probe=fake_probe,
+            ) or {"status": "empty", "reason": "No queued jobs."}
+            _print_json_or_summary(payload, as_json=args.json)
+            return 3 if payload.get("status") == "deferred" else 0
+        if args.jobs_command == "cancel":
+            payload = cancel_job(args.workspace_dir, args.job_id)
+            _print_json_or_summary(payload, as_json=args.json)
+            return 0
+        if args.jobs_command == "resume":
+            payload = resume_job(args.workspace_dir, args.job_id)
+            _print_json_or_summary(payload, as_json=args.json)
+            return 0
+    except JobQueueError as exc:
+        print(f"Job queue error: {exc}", file=sys.stderr)
+        return 1
+    raise JobQueueError(f"Unknown jobs command: {args.jobs_command}")
 
 
 if __name__ == "__main__":  # pragma: no cover
