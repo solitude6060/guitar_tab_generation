@@ -17,6 +17,7 @@ from .demucs_runtime import build_demucs_runtime_gate, format_demucs_runtime_gat
 from .exporters import write_export
 from .input_adapter import InputError, PolicyGateError
 from .job_queue import JobQueueError, cancel_job, read_queue, resume_job, run_next_job, submit_job
+from .model_cache import ModelCacheError, build_cache_doctor, build_prune_plan, discover_model_caches
 from .model_smoke import available_backend_ids, build_model_smoke_plan, format_model_smoke_markdown
 from .pipeline import transcribe_to_tab
 from .practice_tutorial import LocalLLMTutorialError, write_practice_tutorial
@@ -111,6 +112,18 @@ def build_parser() -> argparse.ArgumentParser:
     jobs_resume.add_argument("workspace_dir", type=Path)
     jobs_resume.add_argument("job_id")
     jobs_resume.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    models = subparsers.add_parser("models", help="Inspect local model caches")
+    model_subparsers = models.add_subparsers(dest="models_command", required=True)
+    models_list = model_subparsers.add_parser("list", help="List known model cache entries")
+    models_list.add_argument("--cache-root", type=Path, default=None)
+    models_list.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    models_doctor = model_subparsers.add_parser("doctor", help="Check model cache health")
+    models_doctor.add_argument("--cache-root", type=Path, default=None)
+    models_doctor.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    models_prune = model_subparsers.add_parser("prune", help="Plan safe model cache pruning")
+    models_prune.add_argument("--cache-root", type=Path, default=None)
+    models_prune.add_argument("--dry-run", action="store_true", help="Required; P37 does not delete cache files")
+    models_prune.add_argument("--json", action="store_true", help="Output machine-readable JSON")
     export = subparsers.add_parser("export", help="Export MusicXML / MIDI or DAW bundle from an artifact directory")
     export.add_argument("artifact_dir", type=Path)
     export.add_argument("--format", choices=["musicxml", "midi", "daw"], required=True)
@@ -298,6 +311,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "jobs":
         return _handle_jobs_command(args)
+    if args.command == "models":
+        return _handle_models_command(args)
     if args.command == "export":
         try:
             written = write_export(args.artifact_dir, args.format, args.out)
@@ -512,6 +527,26 @@ def _handle_jobs_command(args: argparse.Namespace) -> int:
         print(f"Job queue error: {exc}", file=sys.stderr)
         return 1
     raise JobQueueError(f"Unknown jobs command: {args.jobs_command}")
+
+
+def _handle_models_command(args: argparse.Namespace) -> int:
+    try:
+        if args.models_command == "list":
+            payload = discover_model_caches(args.cache_root)
+            _print_json_or_summary(payload, as_json=args.json)
+            return 0
+        if args.models_command == "doctor":
+            payload = build_cache_doctor(args.cache_root, repo_root=Path.cwd())
+            _print_json_or_summary(payload, as_json=args.json)
+            return 0 if payload["status"] == "passed" else 3
+        if args.models_command == "prune":
+            payload = build_prune_plan(args.cache_root, dry_run=args.dry_run)
+            _print_json_or_summary(payload, as_json=args.json)
+            return 0
+    except ModelCacheError as exc:
+        print(f"Model cache error: {exc}", file=sys.stderr)
+        return 1
+    raise ModelCacheError(f"Unknown models command: {args.models_command}")
 
 
 if __name__ == "__main__":  # pragma: no cover
