@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 import sys
 
-from . import stem_separation, torchcrepe_f0
+from . import stem_notes, stem_separation, torchcrepe_f0
 from .ai_backends import collect_ai_backend_status, format_ai_backend_status_markdown
 from .ai_runtime import build_resource_plan, collect_ai_runtime_status, format_runtime_status_markdown
 from .audio_preprocess import AudioPreprocessError
@@ -126,6 +126,18 @@ def build_parser() -> argparse.ArgumentParser:
     separate_stems.add_argument("--model", default="htdemucs", help="Demucs model name; default is htdemucs")
     separate_stems.add_argument("--allow-gpu", action="store_true", help="Allow GPU separation when VRAM guard passes")
     separate_stems.add_argument("--min-free-vram-mb", type=int, default=None, help="Minimum free VRAM required for GPU work")
+    transcribe_stem = subparsers.add_parser(
+        "transcribe-stem",
+        help="Run Basic Pitch note transcription for a named stem sidecar",
+    )
+    transcribe_stem.add_argument("artifact_dir", type=Path)
+    transcribe_stem.add_argument(
+        "--backend",
+        default="basic-pitch",
+        choices=["basic-pitch"],
+        help="Stem transcription backend; default is basic-pitch",
+    )
+    transcribe_stem.add_argument("--stem", required=True, help="Stem name from stem_manifest.json, e.g. guitar")
     return parser
 
 
@@ -296,6 +308,18 @@ def main(argv: list[str] | None = None) -> int:
             )
         except BackendExecutionError as exc:
             print(f"Stem separation error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {written}")
+        return 0
+    if args.command == "transcribe-stem":
+        try:
+            written = stem_notes.write_basic_pitch_stem_notes(
+                args.artifact_dir,
+                stem_name=args.stem,
+                backend=args.backend,
+            )
+        except BackendExecutionError as exc:
+            print(f"Stem transcription error: {exc}", file=sys.stderr)
             return 1
         print(f"Wrote {written}")
         return 0

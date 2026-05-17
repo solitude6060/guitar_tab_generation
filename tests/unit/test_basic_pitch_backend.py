@@ -59,3 +59,21 @@ def test_basic_pitch_backend_translates_prediction_to_note_events(
     assert notes[0]["provenance"]["model"] == "basic_pitch_icassp_2022"
     assert notes[0]["velocity"] == pytest.approx(0.81)
     assert any(warning["code"] == "LOW_NOTE_CONFIDENCE" for warning in warnings)
+
+
+def test_basic_pitch_backend_marks_explicit_stem_in_provenance(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    backend = BasicPitchAnalysisBackend(audio_path=tmp_path / "guitar.wav", stem_name="guitar")
+
+    def _predict(audio_path: str, *_args, **_kwargs):
+        assert audio_path == str(tmp_path / "guitar.wav")
+        return ({"note": "raw"}, object(), [(0.0, 0.5, 67, 0.88, [])])
+
+    monkeypatch.setattr("guitar_tab_generation.basic_pitch_backend.load_basic_pitch_predict", lambda: _predict)
+
+    notes, _warnings = backend.transcribe_notes(30.0)
+
+    assert notes[0]["provenance"]["backend"] == "basic-pitch"
+    assert notes[0]["provenance"]["stem"] == "guitar"
