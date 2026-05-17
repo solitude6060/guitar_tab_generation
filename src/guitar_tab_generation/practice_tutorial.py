@@ -7,6 +7,10 @@ from typing import Any
 from .artifact_viewer import ArtifactBundle, load_artifact_bundle, summarize_f0_calibration
 
 
+class LocalLLMTutorialError(RuntimeError):
+    """Raised when an optional LLM tutorial backend is unavailable."""
+
+
 def _format_confidence(value: object) -> str:
     if isinstance(value, (int, float)):
         return f"{float(value):.2f}"
@@ -79,6 +83,26 @@ def _f0_practice_lines(f0_calibration: dict[str, Any] | None) -> list[str]:
     else:
         lines.append("- No pitch-risk notes detected; keep normal tempo ladder practice.")
     return lines
+
+
+def build_fake_llm_coaching_notes(bundle: ArtifactBundle) -> str:
+    """Build deterministic artifact-cited coaching notes for LLM prompt tests."""
+
+    arrangement = bundle.arrangement
+    quality_report = bundle.quality_report
+    warnings = arrangement.get("warnings", [])
+    warning_text = f"{len(warnings)} warning(s)" if isinstance(warnings, list) else "unknown warnings"
+    source = arrangement.get("source", {}).get("input_uri", "unknown")
+    status = quality_report.get("status", "unknown")
+    return "\n".join(
+        [
+            "## LLM Coaching Notes",
+            f"- Source focus: {source} (from `arrangement.json`).",
+            f"- Quality status: {status} (from `quality_report.json`).",
+            f"- Review {warning_text} before increasing tempo (from `arrangement.json`).",
+            "- Use `tab.md` as the only playable TAB source; these notes do not alter notes, chords, sections, or fingerings.",
+        ]
+    )
 
 
 def render_practice_tutorial_markdown(bundle: ArtifactBundle) -> str:
@@ -154,11 +178,25 @@ def render_practice_tutorial_markdown(bundle: ArtifactBundle) -> str:
     return "\n".join(lines)
 
 
-def write_practice_tutorial(artifact_dir: Path, out_path: Path | None = None) -> Path:
+def write_practice_tutorial(
+    artifact_dir: Path,
+    out_path: Path | None = None,
+    *,
+    llm_backend: str = "none",
+) -> Path:
     """Write a Markdown practice tutorial and return the path written."""
 
     bundle = load_artifact_bundle(artifact_dir)
     destination = out_path or artifact_dir / "tutorial.md"
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(render_practice_tutorial_markdown(bundle), encoding="utf-8")
+    markdown = render_practice_tutorial_markdown(bundle)
+    if llm_backend == "fake":
+        markdown = markdown.rstrip() + "\n\n" + build_fake_llm_coaching_notes(bundle) + "\n"
+    elif llm_backend == "local":
+        raise LocalLLMTutorialError(
+            "Local LLM tutorial backend is not configured. Use --llm-backend fake for deterministic tests."
+        )
+    elif llm_backend != "none":
+        raise LocalLLMTutorialError(f"Unknown LLM tutorial backend: {llm_backend}")
+    destination.write_text(markdown, encoding="utf-8")
     return destination
