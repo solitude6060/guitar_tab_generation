@@ -2,7 +2,7 @@
 
 日期：2026-05-17
 狀態：Planned
-前提：P25 `separate-stems` 已完成實作與驗證，但目前 commit 受本機 hook 要求 OmX co-author 與 repo 禁令衝突阻擋；後續 PR 前需先處理 hook/commit policy。
+前提：P25 `separate-stems` 已完成實作、PR #8 已合併進 `dev`，並已透過 stage review 推進到 `main`。
 
 ## 1. 目前可用基線
 
@@ -93,7 +93,7 @@ $ralph 使用 Ralph 完成 P26：依照 docs/plans/p26-stem-aware-basic-pitch-pr
 
 ## 4. 風險與前置處理
 
-- Commit hook 目前要求 OmX co-author，但 repo 規則禁止；在 P26 前應先修正 hook policy 或用 repo 允許的方式提交 P25。
+- P25 commit hook 衝突已處理；後續 commit 仍需維持 Lore commit 格式，且不可加入 OmX coauthor trailer。
 - P26 不應把 stem notes 直接合併回主 `notes.json`；合併策略留給 P27。
 - P27 前不要宣稱 stem notes 比 mix notes 更準；只能呈現 provenance 與 quality evidence。
 - P28/P29 若引入新模型或 heavy dependency，必須先補 ADR 與 optional runtime gate。
