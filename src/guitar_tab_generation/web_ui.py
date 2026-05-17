@@ -10,7 +10,7 @@ from typing import Any
 def _read_json(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (FileNotFoundError, json.JSONDecodeError):
         return {}
     return payload if isinstance(payload, dict) else {}
 
@@ -43,6 +43,9 @@ def render_web_ui_html(workspace_dir: Path) -> str:
     """Render a static artifact browser."""
 
     artifacts = discover_artifacts(workspace_dir)
+    workspace = _read_json(workspace_dir / "workspace.json")
+    project_name = workspace.get("project", {}).get("name") if isinstance(workspace.get("project"), dict) else None
+    title = str(project_name or "Guitar Tab Workspace")
     if artifacts:
         rows = []
         for artifact in artifacts:
@@ -71,7 +74,7 @@ def render_web_ui_html(workspace_dir: Path) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Guitar Tab Workspace</title>
+  <title>{escape(title)}</title>
   <style>
     body {{ font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.5; }}
     table {{ border-collapse: collapse; width: 100%; }}
@@ -80,7 +83,7 @@ def render_web_ui_html(workspace_dir: Path) -> str:
   </style>
 </head>
 <body>
-  <h1>Guitar Tab Workspace</h1>
+  <h1>{escape(title)}</h1>
   {body}
 </body>
 </html>
