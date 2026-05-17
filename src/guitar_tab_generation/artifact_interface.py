@@ -6,7 +6,12 @@ from html import escape
 from pathlib import Path
 from typing import Any
 
-from .artifact_viewer import ArtifactBundle, load_artifact_bundle, summarize_f0_calibration
+from .artifact_viewer import (
+    ArtifactBundle,
+    load_artifact_bundle,
+    summarize_chord_detection,
+    summarize_f0_calibration,
+)
 
 
 def _confidence(value: object) -> str:
@@ -155,6 +160,32 @@ def _format_quality_summary_section(bundle: ArtifactBundle) -> str:
     )
 
 
+def _format_chord_detection_section(bundle: ArtifactBundle) -> str:
+    summary = summarize_chord_detection(bundle.chord_detection)
+    if not summary["available"]:
+        return ""
+
+    warning_items = []
+    for warning in summary["warnings"][:8]:
+        if not isinstance(warning, dict):
+            continue
+        warning_items.append(
+            f"<li><strong>{escape(str(warning.get('code', 'UNKNOWN')))}</strong>: "
+            f"{escape(str(warning.get('message', '')))}</li>"
+        )
+    warnings = "".join(warning_items) or "<li>none</li>"
+    return (
+        "<section>"
+        "<h2>Chord Detection Sidecar</h2>"
+        f"<p><strong>Backend:</strong> {escape(str(summary.get('backend', 'unknown')))}</p>"
+        f"<p><strong>Progression:</strong> {_unique_chords(summary['chords'])}</p>"
+        f"<p><strong>Average confidence:</strong> {_confidence(summary.get('average_confidence'))}</p>"
+        f"<p><strong>Low-confidence chords:</strong> {escape(str(summary.get('low_confidence_count', 0)))}</p>"
+        f"<ul>{warnings}</ul>"
+        "</section>"
+    )
+
+
 def render_artifact_interface_html(bundle: ArtifactBundle) -> str:
     """Render an offline HTML workspace for a generated artifact directory."""
 
@@ -227,6 +258,8 @@ def render_artifact_interface_html(bundle: ArtifactBundle) -> str:
   </section>
 
   {_format_f0_calibration_section(bundle)}
+
+  {_format_chord_detection_section(bundle)}
 
   {_format_quality_summary_section(bundle)}
 
