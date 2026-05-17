@@ -24,6 +24,7 @@ from .torch_backends import (
     format_torch_backend_status_markdown,
     format_torch_smoke_gate_markdown,
 )
+from .web_ui import write_web_ui
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -62,6 +63,14 @@ def build_parser() -> argparse.ArgumentParser:
     interface.add_argument("artifact_dir", type=Path)
     interface.add_argument(
         "--out", type=Path, default=None, help="Output HTML path; defaults to <artifact_dir>/interface.html"
+    )
+    web_ui = subparsers.add_parser("web-ui", help="Render a static artifact browser for a workspace")
+    web_ui.add_argument("workspace_dir", type=Path)
+    web_ui.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Output HTML path; defaults to <workspace_dir>/web-ui.html",
     )
     export = subparsers.add_parser("export", help="Export MusicXML / MIDI or DAW bundle from an artifact directory")
     export.add_argument("artifact_dir", type=Path)
@@ -242,6 +251,10 @@ def main(argv: list[str] | None = None) -> int:
         except ArtifactViewerError as exc:
             print(f"Artifact interface error: {exc}", file=sys.stderr)
             return 1
+        print(f"Wrote {written}")
+        return 0
+    if args.command == "web-ui":
+        written = write_web_ui(args.workspace_dir, args.out)
         print(f"Wrote {written}")
         return 0
     if args.command == "export":
