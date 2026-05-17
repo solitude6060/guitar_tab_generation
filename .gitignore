@@ -1,5 +1,6 @@
 # OMX local runtime/planning state (do not publish to GitHub)
 .omx/
+.omc/
 __pycache__/
 *.py[cod]
 .pytest_cache/
