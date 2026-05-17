@@ -11,6 +11,7 @@ from .artifact_viewer import (
     load_artifact_bundle,
     summarize_chord_detection,
     summarize_f0_calibration,
+    summarize_section_detection,
 )
 
 
@@ -34,6 +35,15 @@ def _unique_chords(chords: list[dict[str, Any]]) -> str:
         if label and (not labels or labels[-1] != label):
             labels.append(label)
     return " → ".join(escape(label) for label in labels) if labels else "No chord progression found"
+
+
+def _unique_labels(items: list[dict[str, Any]], *, empty: str) -> str:
+    labels: list[str] = []
+    for item in items:
+        label = str(item.get("label", "")).strip()
+        if label and (not labels or labels[-1] != label):
+            labels.append(label)
+    return " → ".join(escape(label) for label in labels) if labels else empty
 
 
 def _render_daw_track_item(bundle: ArtifactBundle, track: dict[str, Any]) -> str:
@@ -186,6 +196,33 @@ def _format_chord_detection_section(bundle: ArtifactBundle) -> str:
     )
 
 
+def _format_section_detection_section(bundle: ArtifactBundle) -> str:
+    summary = summarize_section_detection(bundle.section_detection)
+    if not summary["available"]:
+        return ""
+
+    warning_items = []
+    for warning in summary["warnings"][:8]:
+        if not isinstance(warning, dict):
+            continue
+        warning_items.append(
+            f"<li><strong>{escape(str(warning.get('code', 'UNKNOWN')))}</strong>: "
+            f"{escape(str(warning.get('message', '')))}</li>"
+        )
+    warnings = "".join(warning_items) or "<li>none</li>"
+    return (
+        "<section>"
+        "<h2>Section Detection Sidecar</h2>"
+        f"<p><strong>Backend:</strong> {escape(str(summary.get('backend', 'unknown')))}</p>"
+        f"<p><strong>Sections:</strong> {_unique_labels(summary['sections'], empty='No sections found')}</p>"
+        f"<p><strong>Section count:</strong> {escape(str(summary.get('section_count', 0)))}</p>"
+        f"<p><strong>Average confidence:</strong> {_confidence(summary.get('average_confidence'))}</p>"
+        f"<p><strong>Low-confidence sections:</strong> {escape(str(summary.get('low_confidence_count', 0)))}</p>"
+        f"<ul>{warnings}</ul>"
+        "</section>"
+    )
+
+
 def render_artifact_interface_html(bundle: ArtifactBundle) -> str:
     """Render an offline HTML workspace for a generated artifact directory."""
 
@@ -260,6 +297,8 @@ def render_artifact_interface_html(bundle: ArtifactBundle) -> str:
   {_format_f0_calibration_section(bundle)}
 
   {_format_chord_detection_section(bundle)}
+
+  {_format_section_detection_section(bundle)}
 
   {_format_quality_summary_section(bundle)}
 

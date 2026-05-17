@@ -85,6 +85,17 @@ def test_load_artifact_bundle_ignores_legacy_chords_list_sidecar(tmp_path: Path)
     assert "## Chord Detection Sidecar" not in markdown
 
 
+def test_load_artifact_bundle_ignores_legacy_sections_list_sidecar(tmp_path: Path) -> None:
+    _write_bundle(tmp_path)
+    (tmp_path / "sections.json").write_text(json.dumps([{"label": "A"}]), encoding="utf-8")
+
+    bundle = load_artifact_bundle(tmp_path)
+    markdown = render_artifact_viewer_markdown(bundle)
+
+    assert bundle.section_detection is None
+    assert "## Section Detection Sidecar" not in markdown
+
+
 def test_write_artifact_viewer_defaults_to_artifact_dir(tmp_path: Path) -> None:
     _write_bundle(tmp_path)
 

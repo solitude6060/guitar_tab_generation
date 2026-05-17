@@ -22,6 +22,7 @@ class ArtifactBundle:
     tab_markdown: str
     f0_calibration: dict[str, Any] | None = None
     chord_detection: dict[str, Any] | None = None
+    section_detection: dict[str, Any] | None = None
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -69,6 +70,9 @@ def load_artifact_bundle(artifact_dir: Path) -> ArtifactBundle:
         chord_detection=_read_optional_json_object(artifact_dir / "chords.json")
         if (artifact_dir / "chords.json").exists()
         else None,
+        section_detection=_read_optional_json_object(artifact_dir / "sections.json")
+        if (artifact_dir / "sections.json").exists()
+        else None,
     )
 
 
@@ -104,6 +108,15 @@ def _chord_progression(chords: list[dict[str, Any]]) -> str:
         if label and (not labels or labels[-1] != label):
             labels.append(label)
     return " → ".join(labels) if labels else "No chord spans found"
+
+
+def _label_progression(items: list[dict[str, Any]], *, empty: str) -> str:
+    labels: list[str] = []
+    for item in items:
+        label = str(item.get("label", "")).strip()
+        if label and (not labels or labels[-1] != label):
+            labels.append(label)
+    return " → ".join(labels) if labels else empty
 
 
 def _practice_readiness(arrangement: dict[str, Any], quality_report: dict[str, Any]) -> str:
@@ -258,6 +271,52 @@ def format_chord_detection_markdown(chord_detection: dict[str, Any] | None) -> l
     return lines
 
 
+def summarize_section_detection(section_detection: dict[str, Any] | None) -> dict[str, Any]:
+    """Summarize optional section detection sidecar for viewer surfaces."""
+
+    if not section_detection:
+        return {"available": False, "sections": [], "warnings": []}
+    sections = section_detection.get("sections", [])
+    warnings = section_detection.get("warnings", [])
+    summary = section_detection.get("summary", {})
+    return {
+        "available": True,
+        "backend": section_detection.get("backend", "unknown"),
+        "sections": sections if isinstance(sections, list) else [],
+        "warnings": warnings if isinstance(warnings, list) else [],
+        "average_confidence": summary.get("average_confidence") if isinstance(summary, dict) else None,
+        "low_confidence_count": summary.get("low_confidence_count", 0) if isinstance(summary, dict) else 0,
+        "section_count": summary.get("section_count", 0) if isinstance(summary, dict) else 0,
+    }
+
+
+def format_section_detection_markdown(section_detection: dict[str, Any] | None) -> list[str]:
+    """Return Markdown lines for optional section detection sidecar summary."""
+
+    summary = summarize_section_detection(section_detection)
+    if not summary["available"]:
+        return []
+
+    lines = [
+        "",
+        "## Section Detection Sidecar",
+        f"- Backend: {summary.get('backend', 'unknown')}",
+        f"- Sections: {_label_progression(summary['sections'], empty='No sections found')}",
+        f"- Section count: {summary.get('section_count', 0)}",
+        f"- Average confidence: {_format_confidence(summary.get('average_confidence'))}",
+        f"- Low-confidence sections: {summary.get('low_confidence_count', 0)}",
+    ]
+    if summary["warnings"]:
+        lines.append("- Warnings:")
+        for warning in summary["warnings"][:8]:
+            if not isinstance(warning, dict):
+                continue
+            lines.append(f"  - {warning.get('code', 'UNKNOWN')}: {warning.get('message', '')}")
+    else:
+        lines.append("- Warnings: none")
+    return lines
+
+
 def render_artifact_viewer_markdown(bundle: ArtifactBundle) -> str:
     """Render a stable Markdown summary for demos and practice review."""
 
@@ -301,6 +360,7 @@ def render_artifact_viewer_markdown(bundle: ArtifactBundle) -> str:
 
     lines.extend(format_f0_calibration_markdown(bundle.f0_calibration))
     lines.extend(format_chord_detection_markdown(bundle.chord_detection))
+    lines.extend(format_section_detection_markdown(bundle.section_detection))
     lines.extend(format_quality_summary_markdown(quality_report))
 
     lines.extend([
