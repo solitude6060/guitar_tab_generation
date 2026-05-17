@@ -65,11 +65,11 @@
 
 | Priority | Epic | 目標 | 建議分支 | 狀態 |
 |---|---|---|---|---|
-| P21 | F0 Calibration Consumption | viewer/interface/tutorial 顯示 `f0_calibration.json` 低信心音符 | `feature/f0-calibration-consumption` | Planned |
-| P22 | Optional Torch Dependency Group | 新增可選 `torch` dependency group 與安裝文件，不影響 dev default | `feature/optional-torch-deps` | Planned |
-| P23 | Real torchcrepe Runtime Smoke | 在 opt-in 環境跑真實 torchcrepe CPU/GPU smoke | `feature/real-torchcrepe-smoke` | Planned |
-| P24 | Demucs Runtime Planning + Install Gate | Demucs optional dependency / cache / GPU gate 規格化 | `feature/demucs-runtime-gate` | Planned |
-| P25 | Demucs Stem Separation Sidecar | `separate-stems` 產生 stems artifact，不改 transcribe default | `feature/demucs-stem-sidecar` | Planned |
+| P21 | F0 Calibration Consumption | viewer/interface/tutorial 顯示 `f0_calibration.json` 低信心音符 | `feature/f0-calibration-consumption` | Implemented |
+| P22 | Optional Torch Dependency Group | 新增可選 `torch` dependency group 與安裝文件，不影響 dev default | `feature/optional-torch-deps` | Implemented |
+| P23 | Real torchcrepe Runtime Smoke | 在 opt-in 環境跑真實 torchcrepe CPU/GPU smoke | `feature/real-torchcrepe-smoke` | Implemented |
+| P24 | Demucs Runtime Planning + Install Gate | Demucs optional dependency / cache / GPU gate 規格化 | `feature/demucs-runtime-gate` | Implemented |
+| P25 | Demucs Stem Separation Sidecar | `separate-stems` 產生 stems artifact，不改 transcribe default | `feature/demucs-stem-sidecar` | Implemented |
 | P26 | Stem-aware Basic Pitch Pipeline | 可選對 guitar stem 跑 Basic Pitch，提高 notes cleanliness | `feature/stem-aware-basic-pitch` | Planned |
 | P27 | Artifact Quality Scoring v2 | 合併 Basic Pitch/F0/stem confidence，產生更實用 quality report | `feature/artifact-quality-v2` | Planned |
 | P28 | Chord Recognition Backend | 新增真實 chord estimation sidecar / backend | `feature/chord-recognition-backend` | Planned |
@@ -453,5 +453,5 @@ guitar-tab-generation separate-stems <artifact_dir>
 ## 7. 推薦下一條 Ralph 指令
 
 ```text
-$ralph 使用 Ralph 完成 P21：依照 docs/plans/remaining-feature-master-plan-20260516.md 的 P21 範圍，建立 P21 PRD/test-spec，將 f0_calibration.json 整合進 viewer/interface/tutorial，讓低 pitch confidence 與 delta_semitones 可被使用者看見；保留 P20 sidecar 行為，不新增 heavy dependency；嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
+$ralph 使用 Ralph 完成 P26：依照 docs/plans/p26-stem-aware-basic-pitch-prd-20260517.md 與 docs/plans/p26-stem-aware-basic-pitch-test-spec-20260517.md，新增 artifact-first `guitar-tab-generation transcribe-stem <artifact_dir> --backend basic-pitch --stem <name>`；讀取 P25 `stem_manifest.json`，對指定 stem 使用 fake Basic Pitch runtime 產生 `stem_notes/<stem>.notes.json`，provenance 標記 stem，不改 transcribe default，不 silent fallback 到 mix，不執行真實 Demucs；嚴格 SDD/TDD/git flow，用 uv；非必要不要找使用者。
 ```
