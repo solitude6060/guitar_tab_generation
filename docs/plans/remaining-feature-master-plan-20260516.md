@@ -70,8 +70,8 @@
 | P23 | Real torchcrepe Runtime Smoke | 在 opt-in 環境跑真實 torchcrepe CPU/GPU smoke | `feature/real-torchcrepe-smoke` | Implemented |
 | P24 | Demucs Runtime Planning + Install Gate | Demucs optional dependency / cache / GPU gate 規格化 | `feature/demucs-runtime-gate` | Implemented |
 | P25 | Demucs Stem Separation Sidecar | `separate-stems` 產生 stems artifact，不改 transcribe default | `feature/demucs-stem-sidecar` | Implemented |
-| P26 | Stem-aware Basic Pitch Pipeline | 可選對 guitar stem 跑 Basic Pitch，提高 notes cleanliness | `feature/stem-aware-basic-pitch` | Planned |
-| P27 | Artifact Quality Scoring v2 | 合併 Basic Pitch/F0/stem confidence，產生更實用 quality report | `feature/artifact-quality-v2` | Planned |
+| P26 | Stem-aware Basic Pitch Pipeline | 可選對 guitar stem 跑 Basic Pitch，提高 notes cleanliness | `feature/stem-aware-basic-pitch` | Implemented |
+| P27 | Artifact Quality Scoring v2 | 合併 Basic Pitch/F0/stem confidence，產生更實用 quality report | `feature/artifact-quality-v2` | Implemented |
 | P28 | Chord Recognition Backend | 新增真實 chord estimation sidecar / backend | `feature/chord-recognition-backend` | Planned |
 | P29 | Section Detection Backend | 新增真實 section/structure detection sidecar / backend | `feature/section-detection-backend` | Planned |
 | P30 | Fingering + Playability v2 | solo/riff 指法推定與可彈性修正 | `feature/fingering-playability-v2` | Planned |

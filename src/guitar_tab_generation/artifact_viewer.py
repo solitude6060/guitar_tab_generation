@@ -164,6 +164,40 @@ def format_f0_calibration_markdown(f0_calibration: dict[str, Any] | None) -> lis
     return lines
 
 
+def format_quality_summary_markdown(quality_report: dict[str, Any]) -> list[str]:
+    """Return Markdown lines for optional quality report v2 summary."""
+
+    summary = quality_report.get("artifact_summary")
+    if not isinstance(summary, dict):
+        return []
+
+    stem_availability = summary.get("stem_availability", {})
+    pitch_risk = summary.get("pitch_risk", {})
+    backend_confidence = summary.get("backend_confidence", [])
+    stems = stem_availability.get("stems", []) if isinstance(stem_availability, dict) else []
+    pitch_risk_summary = pitch_risk if isinstance(pitch_risk, dict) else {}
+    stem_text = ", ".join(str(stem) for stem in stems) if stems else "none"
+    lines = [
+        "",
+        "## Quality Summary",
+        f"- Available stems: {stem_text}",
+        f"- Pitch-risk notes: {pitch_risk_summary.get('risk_count', 0)} / {pitch_risk_summary.get('total_notes', 0)}",
+    ]
+    if isinstance(backend_confidence, list) and backend_confidence:
+        lines.append("- Backend confidence:")
+        for item in backend_confidence[:8]:
+            if not isinstance(item, dict):
+                continue
+            backend = item.get("backend", "unknown")
+            stem = item.get("stem", "unknown")
+            confidence = _format_confidence(item.get("average_confidence"))
+            count = item.get("event_count", 0)
+            lines.append(f"  - {backend} / {stem}: {confidence} across {count} events")
+    else:
+        lines.append("- Backend confidence: unavailable")
+    return lines
+
+
 def render_artifact_viewer_markdown(bundle: ArtifactBundle) -> str:
     """Render a stable Markdown summary for demos and practice review."""
 
@@ -206,6 +240,7 @@ def render_artifact_viewer_markdown(bundle: ArtifactBundle) -> str:
         lines.append("- None")
 
     lines.extend(format_f0_calibration_markdown(bundle.f0_calibration))
+    lines.extend(format_quality_summary_markdown(quality_report))
 
     lines.extend([
         "",

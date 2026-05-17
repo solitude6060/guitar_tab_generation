@@ -2,7 +2,7 @@
 
 日期：2026-05-17
 狀態：Planned
-基線：P25 已合併並推進到 `main`。下一步從 `main` 開新 feature branch 做 P26。
+基線：P26 已合併並推進到 `main`。下一步從 `main` 開新 feature branch 做 P28。
 
 ## 執行原則
 
