@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 import sys
 
+from . import stem_separation, torchcrepe_f0
 from .ai_backends import collect_ai_backend_status, format_ai_backend_status_markdown
 from .ai_runtime import build_resource_plan, collect_ai_runtime_status, format_runtime_status_markdown
 from .audio_preprocess import AudioPreprocessError
@@ -23,7 +24,6 @@ from .torch_backends import (
     format_torch_backend_status_markdown,
     format_torch_smoke_gate_markdown,
 )
-from . import torchcrepe_f0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -111,6 +111,21 @@ def build_parser() -> argparse.ArgumentParser:
     demucs_gate.add_argument("--allow-gpu", action="store_true", help="Allow GPU gate probe when VRAM guard passes")
     demucs_gate.add_argument("--min-free-vram-mb", type=int, default=None, help="Minimum free VRAM required for Demucs GPU work")
     demucs_gate.add_argument("--model", default="htdemucs", help="Demucs model name for cache planning; default is htdemucs")
+    separate_stems = subparsers.add_parser(
+        "separate-stems",
+        help="Run optional Demucs stem separation for an existing artifact directory",
+    )
+    separate_stems.add_argument("artifact_dir", type=Path)
+    separate_stems.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Output manifest path; defaults to <artifact_dir>/stem_manifest.json",
+    )
+    separate_stems.add_argument("--device", choices=["cpu", "cuda"], default="cpu", help="Demucs device; default is cpu")
+    separate_stems.add_argument("--model", default="htdemucs", help="Demucs model name; default is htdemucs")
+    separate_stems.add_argument("--allow-gpu", action="store_true", help="Allow GPU separation when VRAM guard passes")
+    separate_stems.add_argument("--min-free-vram-mb", type=int, default=None, help="Minimum free VRAM required for GPU work")
     return parser
 
 
@@ -269,6 +284,21 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(format_demucs_runtime_gate_markdown(gate))
         return 1 if gate["summary"]["failed"] else 0
+    if args.command == "separate-stems":
+        try:
+            written = stem_separation.write_stem_separation(
+                args.artifact_dir,
+                out=args.out,
+                device=args.device,
+                model_name=args.model,
+                allow_gpu=args.allow_gpu,
+                min_free_vram_mb=args.min_free_vram_mb,
+            )
+        except BackendExecutionError as exc:
+            print(f"Stem separation error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {written}")
+        return 0
     parser.error("unknown command")
     return 1
 
