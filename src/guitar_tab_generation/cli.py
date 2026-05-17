@@ -21,6 +21,7 @@ from .model_cache import ModelCacheError, build_cache_doctor, build_prune_plan, 
 from .model_smoke import available_backend_ids, build_model_smoke_plan, format_model_smoke_markdown
 from .pipeline import transcribe_to_tab
 from .practice_tutorial import LocalLLMTutorialError, write_practice_tutorial
+from .project_workspace import WorkspaceError, add_artifact_to_workspace, init_workspace, update_workspace_index
 from .torch_backends import (
     build_torch_backend_smoke_gate,
     collect_torch_backend_status,
@@ -124,6 +125,21 @@ def build_parser() -> argparse.ArgumentParser:
     models_prune.add_argument("--cache-root", type=Path, default=None)
     models_prune.add_argument("--dry-run", action="store_true", help="Required; P37 does not delete cache files")
     models_prune.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    workspace = subparsers.add_parser("workspace", help="Manage project workspaces")
+    workspace_subparsers = workspace.add_subparsers(dest="workspace_command", required=True)
+    workspace_init = workspace_subparsers.add_parser("init", help="Initialize workspace.json")
+    workspace_init.add_argument("workspace_dir", type=Path)
+    workspace_init.add_argument("--name", default=None)
+    workspace_init.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    workspace_index = workspace_subparsers.add_parser("index", help="Scan artifact directories into workspace.json")
+    workspace_index.add_argument("workspace_dir", type=Path)
+    workspace_index.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    workspace_add = workspace_subparsers.add_parser("add-artifact", help="Add one artifact directory to workspace.json")
+    workspace_add.add_argument("workspace_dir", type=Path)
+    workspace_add.add_argument("artifact_dir", type=Path)
+    workspace_add.add_argument("--song-id", default=None)
+    workspace_add.add_argument("--title", default=None)
+    workspace_add.add_argument("--json", action="store_true", help="Output machine-readable JSON")
     export = subparsers.add_parser("export", help="Export MusicXML / MIDI or DAW bundle from an artifact directory")
     export.add_argument("artifact_dir", type=Path)
     export.add_argument("--format", choices=["musicxml", "midi", "daw"], required=True)
@@ -313,6 +329,8 @@ def main(argv: list[str] | None = None) -> int:
         return _handle_jobs_command(args)
     if args.command == "models":
         return _handle_models_command(args)
+    if args.command == "workspace":
+        return _handle_workspace_command(args)
     if args.command == "export":
         try:
             written = write_export(args.artifact_dir, args.format, args.out)
@@ -547,6 +565,31 @@ def _handle_models_command(args: argparse.Namespace) -> int:
         print(f"Model cache error: {exc}", file=sys.stderr)
         return 1
     raise ModelCacheError(f"Unknown models command: {args.models_command}")
+
+
+def _handle_workspace_command(args: argparse.Namespace) -> int:
+    try:
+        if args.workspace_command == "init":
+            payload = init_workspace(args.workspace_dir, name=args.name)
+            _print_json_or_summary(payload, as_json=args.json)
+            return 0
+        if args.workspace_command == "index":
+            payload = update_workspace_index(args.workspace_dir)
+            _print_json_or_summary(payload, as_json=args.json)
+            return 0
+        if args.workspace_command == "add-artifact":
+            payload = add_artifact_to_workspace(
+                args.workspace_dir,
+                args.artifact_dir,
+                song_id=args.song_id,
+                title=args.title,
+            )
+            _print_json_or_summary(payload, as_json=args.json)
+            return 0
+    except WorkspaceError as exc:
+        print(f"Workspace error: {exc}", file=sys.stderr)
+        return 1
+    raise WorkspaceError(f"Unknown workspace command: {args.workspace_command}")
 
 
 if __name__ == "__main__":  # pragma: no cover
