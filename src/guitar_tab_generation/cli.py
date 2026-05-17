@@ -28,6 +28,7 @@ from .torch_backends import (
     format_torch_backend_status_markdown,
     format_torch_smoke_gate_markdown,
 )
+from .url_ingest import UrlIngestError, ingest_url
 from .web_ui import write_web_ui
 
 
@@ -49,6 +50,10 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Reserved for future gated URL support; arbitrary URL download remains disabled in MVP.",
     )
+    ingest_url_parser = subparsers.add_parser("ingest-url", help="Apply legal URL ingestion policy without downloading")
+    ingest_url_parser.add_argument("url")
+    ingest_url_parser.add_argument("--out", required=True, type=Path)
+    ingest_url_parser.add_argument("--i-own-rights", action="store_true", help="Required rights declaration")
     view = subparsers.add_parser("view", help="Render a Markdown summary from an existing artifact directory")
     view.add_argument("artifact_dir", type=Path)
     view.add_argument("--out", type=Path, default=None, help="Output Markdown path; defaults to <artifact_dir>/viewer.md")
@@ -297,6 +302,16 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(f"Wrote {args.out / 'tab.md'}")
         return 0 if quality_report["status"] == "passed" else 3
+    if args.command == "ingest-url":
+        try:
+            written = ingest_url(args.url, args.out, i_own_rights=args.i_own_rights)
+        except UrlIngestError as exc:
+            args.out.mkdir(parents=True, exist_ok=True)
+            (args.out / "policy_gate.txt").write_text(str(exc) + "\n", encoding="utf-8")
+            print(f"URL policy error: {exc}", file=sys.stderr)
+            return 2
+        print(f"Wrote {written}")
+        return 0
     if args.command == "view":
         try:
             written = write_artifact_viewer(args.artifact_dir, args.out)
