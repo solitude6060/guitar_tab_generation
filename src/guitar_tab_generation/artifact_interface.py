@@ -122,6 +122,39 @@ def _format_f0_calibration_section(bundle: ArtifactBundle) -> str:
     )
 
 
+def _format_quality_summary_section(bundle: ArtifactBundle) -> str:
+    summary = bundle.quality_report.get("artifact_summary")
+    if not isinstance(summary, dict):
+        return ""
+
+    stem_availability = summary.get("stem_availability", {})
+    pitch_risk = summary.get("pitch_risk", {})
+    backend_confidence = summary.get("backend_confidence", [])
+    stems = stem_availability.get("stems", []) if isinstance(stem_availability, dict) else []
+    pitch_risk_summary = pitch_risk if isinstance(pitch_risk, dict) else {}
+    stem_text = ", ".join(escape(str(stem)) for stem in stems) if stems else "none"
+    items = []
+    if isinstance(backend_confidence, list):
+        for item in backend_confidence[:8]:
+            if not isinstance(item, dict):
+                continue
+            label = f"{item.get('backend', 'unknown')} / {item.get('stem', 'unknown')}"
+            items.append(
+                f"<li>{escape(label)}: {_confidence(item.get('average_confidence'))} "
+                f"across {escape(str(item.get('event_count', 0)))} events</li>"
+            )
+    confidence_items = "".join(items) or "<li>unavailable</li>"
+    return (
+        "<section>"
+        "<h2>Quality Summary</h2>"
+        f"<p>Available stems: {stem_text}</p>"
+        f"<p>Pitch-risk notes: {escape(str(pitch_risk_summary.get('risk_count', 0)))} / "
+        f"{escape(str(pitch_risk_summary.get('total_notes', 0)))}</p>"
+        f"<ul>{confidence_items}</ul>"
+        "</section>"
+    )
+
+
 def render_artifact_interface_html(bundle: ArtifactBundle) -> str:
     """Render an offline HTML workspace for a generated artifact directory."""
 
@@ -194,6 +227,8 @@ def render_artifact_interface_html(bundle: ArtifactBundle) -> str:
   </section>
 
   {_format_f0_calibration_section(bundle)}
+
+  {_format_quality_summary_section(bundle)}
 
   <section>
     <h2>Practice links</h2>
