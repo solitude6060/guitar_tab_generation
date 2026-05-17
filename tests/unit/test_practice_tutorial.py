@@ -5,7 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from guitar_tab_generation.practice_tutorial import render_practice_tutorial_markdown, write_practice_tutorial
+from guitar_tab_generation.practice_tutorial import (
+    LocalLLMTutorialError,
+    build_fake_llm_coaching_notes,
+    render_practice_tutorial_markdown,
+    write_practice_tutorial,
+)
 from guitar_tab_generation.artifact_viewer import ArtifactViewerError, load_artifact_bundle
 
 
@@ -77,6 +82,37 @@ def test_write_practice_tutorial_defaults_to_artifact_dir(tmp_path: Path) -> Non
 
     assert written == tmp_path / "tutorial.md"
     assert "# Practice Tutorial" in written.read_text(encoding="utf-8")
+
+
+def test_fake_llm_coaching_notes_include_artifact_citations(tmp_path: Path) -> None:
+    _write_bundle(tmp_path)
+    bundle = load_artifact_bundle(tmp_path)
+
+    notes = build_fake_llm_coaching_notes(bundle)
+
+    assert "## LLM Coaching Notes" in notes
+    assert "`arrangement.json`" in notes
+    assert "`quality_report.json`" in notes
+    assert "`tab.md`" in notes
+
+
+def test_write_practice_tutorial_fake_llm_backend_is_opt_in(tmp_path: Path) -> None:
+    _write_bundle(tmp_path)
+
+    default_written = write_practice_tutorial(tmp_path)
+    assert "## LLM Coaching Notes" not in default_written.read_text(encoding="utf-8")
+
+    fake_written = write_practice_tutorial(tmp_path, llm_backend="fake")
+    assert "## LLM Coaching Notes" in fake_written.read_text(encoding="utf-8")
+
+
+def test_write_practice_tutorial_local_llm_backend_fails_without_runtime(tmp_path: Path) -> None:
+    _write_bundle(tmp_path)
+
+    with pytest.raises(LocalLLMTutorialError, match="Local LLM tutorial backend is not configured"):
+        write_practice_tutorial(tmp_path, llm_backend="local")
+
+    assert not (tmp_path / "tutorial.md").exists()
 
 
 def test_write_practice_tutorial_uses_artifact_contract_errors(tmp_path: Path) -> None:

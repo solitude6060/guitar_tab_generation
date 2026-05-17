@@ -65,6 +65,40 @@ def test_cli_tutorial_supports_custom_output_path(tmp_path: Path) -> None:
     assert "single_note_riff_30_90s" in custom_out.read_text(encoding="utf-8")
 
 
+def test_cli_tutorial_fake_llm_backend_adds_cited_coaching_notes(tmp_path: Path) -> None:
+    artifact_dir = tmp_path / "riff"
+    assert main([
+        "transcribe",
+        "fixtures/single_note_riff_30_90s.wav",
+        "--backend",
+        "fixture",
+        "--out",
+        str(artifact_dir),
+    ]) == 0
+
+    assert main(["tutorial", str(artifact_dir), "--llm-backend", "fake"]) == 0
+
+    tutorial = (artifact_dir / "tutorial.md").read_text(encoding="utf-8")
+    assert "## LLM Coaching Notes" in tutorial
+    assert "`arrangement.json`" in tutorial
+    assert "`quality_report.json`" in tutorial
+
+
+def test_cli_tutorial_local_llm_backend_fails_without_fallback(tmp_path: Path) -> None:
+    artifact_dir = tmp_path / "riff"
+    assert main([
+        "transcribe",
+        "fixtures/single_note_riff_30_90s.wav",
+        "--backend",
+        "fixture",
+        "--out",
+        str(artifact_dir),
+    ]) == 0
+
+    assert main(["tutorial", str(artifact_dir), "--llm-backend", "local"]) == 1
+    assert not (artifact_dir / "tutorial.md").exists()
+
+
 def test_cli_tutorial_fails_cleanly_when_artifact_is_missing(tmp_path: Path) -> None:
     artifact_dir = tmp_path / "broken"
     artifact_dir.mkdir()

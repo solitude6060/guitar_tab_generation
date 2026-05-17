@@ -17,7 +17,7 @@ from .exporters import write_export
 from .input_adapter import InputError, PolicyGateError
 from .model_smoke import available_backend_ids, build_model_smoke_plan, format_model_smoke_markdown
 from .pipeline import transcribe_to_tab
-from .practice_tutorial import write_practice_tutorial
+from .practice_tutorial import LocalLLMTutorialError, write_practice_tutorial
 from .torch_backends import (
     build_torch_backend_smoke_gate,
     collect_torch_backend_status,
@@ -51,6 +51,12 @@ def build_parser() -> argparse.ArgumentParser:
     tutorial.add_argument("artifact_dir", type=Path)
     tutorial.add_argument(
         "--out", type=Path, default=None, help="Output Markdown path; defaults to <artifact_dir>/tutorial.md"
+    )
+    tutorial.add_argument(
+        "--llm-backend",
+        choices=["none", "fake", "local"],
+        default="none",
+        help="Optional LLM coaching backend; default is none. fake is deterministic for tests.",
     )
     interface = subparsers.add_parser("interface", help="Render an offline HTML interface from an artifact directory")
     interface.add_argument("artifact_dir", type=Path)
@@ -224,8 +230,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "tutorial":
         try:
-            written = write_practice_tutorial(args.artifact_dir, args.out)
-        except ArtifactViewerError as exc:
+            written = write_practice_tutorial(args.artifact_dir, args.out, llm_backend=args.llm_backend)
+        except (ArtifactViewerError, LocalLLMTutorialError) as exc:
             print(f"Practice tutorial error: {exc}", file=sys.stderr)
             return 1
         print(f"Wrote {written}")
