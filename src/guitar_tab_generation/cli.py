@@ -11,6 +11,7 @@ from .audio_preprocess import AudioPreprocessError
 from .artifact_viewer import ArtifactViewerError, write_artifact_viewer
 from .artifact_interface import write_artifact_interface
 from .backends import BackendExecutionError
+from .demucs_runtime import build_demucs_runtime_gate, format_demucs_runtime_gate_markdown
 from .exporters import write_export
 from .input_adapter import InputError, PolicyGateError
 from .model_smoke import available_backend_ids, build_model_smoke_plan, format_model_smoke_markdown
@@ -104,6 +105,12 @@ def build_parser() -> argparse.ArgumentParser:
     model_smoke.add_argument("--download", action="store_true", help="Actually run download commands; default only plans")
     model_smoke.add_argument("--allow-gpu", action="store_true", help="Allow GPU-sensitive smoke checks when VRAM guard passes")
     model_smoke.add_argument("--min-free-vram-mb", type=int, default=None, help="Minimum free VRAM required for GPU-sensitive checks")
+    demucs_gate = subparsers.add_parser("demucs-gate", help="Plan and check Demucs optional runtime install gates")
+    demucs_gate.add_argument("--json", action="store_true", help="Output machine-readable JSON")
+    demucs_gate.add_argument("--check-runtime", action="store_true", help="Verify optional Demucs runtime without running separation")
+    demucs_gate.add_argument("--allow-gpu", action="store_true", help="Allow GPU gate probe when VRAM guard passes")
+    demucs_gate.add_argument("--min-free-vram-mb", type=int, default=None, help="Minimum free VRAM required for Demucs GPU work")
+    demucs_gate.add_argument("--model", default="htdemucs", help="Demucs model name for cache planning; default is htdemucs")
     return parser
 
 
@@ -248,6 +255,20 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(format_model_smoke_markdown(plan))
         return 1 if plan["summary"]["failed"] else 0
+    if args.command == "demucs-gate":
+        gate = build_demucs_runtime_gate(
+            check_runtime=args.check_runtime,
+            allow_gpu=args.allow_gpu,
+            min_free_vram_mb=args.min_free_vram_mb,
+            model_name=args.model,
+        )
+        if args.json:
+            import json
+
+            print(json.dumps(gate, ensure_ascii=False, indent=2))
+        else:
+            print(format_demucs_runtime_gate_markdown(gate))
+        return 1 if gate["summary"]["failed"] else 0
     parser.error("unknown command")
     return 1
 
