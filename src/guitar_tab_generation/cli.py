@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 import sys
 
-from . import artifact_quality, stem_notes, stem_separation, torchcrepe_f0
+from . import artifact_quality, chord_detection, stem_notes, stem_separation, torchcrepe_f0
 from .ai_backends import collect_ai_backend_status, format_ai_backend_status_markdown
 from .ai_runtime import build_resource_plan, collect_ai_runtime_status, format_runtime_status_markdown
 from .audio_preprocess import AudioPreprocessError
@@ -148,6 +148,17 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Output JSON path; defaults to <artifact_dir>/quality_report.json",
+    )
+    chord_detect = subparsers.add_parser(
+        "chord-detect",
+        help="Generate a deterministic chords.json sidecar from an artifact directory",
+    )
+    chord_detect.add_argument("artifact_dir", type=Path)
+    chord_detect.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Output JSON path; defaults to <artifact_dir>/chords.json",
     )
     return parser
 
@@ -339,6 +350,14 @@ def main(argv: list[str] | None = None) -> int:
             written = artifact_quality.write_artifact_quality_report_v2(args.artifact_dir, out_path=args.out)
         except BackendExecutionError as exc:
             print(f"Quality report error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {written}")
+        return 0
+    if args.command == "chord-detect":
+        try:
+            written = chord_detection.write_chord_sidecar(args.artifact_dir, out_path=args.out)
+        except chord_detection.ChordDetectionError as exc:
+            print(f"Chord detection error: {exc}", file=sys.stderr)
             return 1
         print(f"Wrote {written}")
         return 0
