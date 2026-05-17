@@ -63,4 +63,3 @@ P26 planning is correctly separated from the P25 implementation: stem-aware Basi
 - Real Demucs source separation was intentionally not executed in default gates. P25 validates the sidecar contract with fake runtime and P24 gate reuse only.
 - The real Demucs CLI output layout remains environment-sensitive; the adapter expects `<output>/<model>/<audio-stem>/*.wav`.
 - P26 must not merge stem notes into primary `notes.json` until P27 defines quality reconciliation.
-

@@ -67,4 +67,3 @@ guitar-tab-generation transcribe-stem <artifact_dir> --backend basic-pitch --ste
 - note provenance 包含指定 stem，不 fallback 到 mix。
 - `transcribe --help` 仍不含 `--stem`。
 - `uv run pytest -q` 通過。
-

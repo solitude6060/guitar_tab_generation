@@ -97,4 +97,3 @@ $ralph 使用 Ralph 完成 P26：依照 docs/plans/p26-stem-aware-basic-pitch-pr
 - P26 不應把 stem notes 直接合併回主 `notes.json`；合併策略留給 P27。
 - P27 前不要宣稱 stem notes 比 mix notes 更準；只能呈現 provenance 與 quality evidence。
 - P28/P29 若引入新模型或 heavy dependency，必須先補 ADR 與 optional runtime gate。
-

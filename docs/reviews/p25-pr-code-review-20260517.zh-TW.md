@@ -63,4 +63,3 @@ P26 規劃也已和 P25 實作切開：stem-aware Basic Pitch 規劃為 `transcr
 - default gates 刻意不執行真實 Demucs source separation。P25 只以 fake runtime 與 P24 gate reuse 驗證 sidecar contract。
 - 真實 Demucs CLI 輸出 layout 仍有環境相依風險；adapter 預期 `<output>/<model>/<audio-stem>/*.wav`。
 - P26 在 P27 定義 quality reconciliation 前，不應把 stem notes 直接合併進主 `notes.json`。
-

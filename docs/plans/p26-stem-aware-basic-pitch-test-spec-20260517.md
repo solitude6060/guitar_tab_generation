@@ -43,4 +43,3 @@ UV_CACHE_DIR=/tmp/uv-cache uv run guitar-tab-generation transcribe --help
 ## 5. Red-first expectations
 
 第一個 red test 應鎖定 `transcribe-stem --help` 或 stem manifest reader 不存在。第二個 red test 鎖定 provenance 不得默認 `mix`。
-
