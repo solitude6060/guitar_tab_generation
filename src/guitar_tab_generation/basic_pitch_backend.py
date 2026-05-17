@@ -31,8 +31,9 @@ class BasicPitchAnalysisBackend(FixtureAnalysisBackend):
 
     name = "basic-pitch"
 
-    def __init__(self, *, audio_path: Path | None) -> None:
+    def __init__(self, *, audio_path: Path | None, stem_name: str = "mix") -> None:
         self.audio_path = audio_path
+        self.stem_name = stem_name
 
     def transcribe_notes(self, duration_seconds: float, fixture_metadata: dict | None = None) -> tuple[list[dict], list[dict]]:
         if self.audio_path is None:
@@ -66,7 +67,7 @@ class BasicPitchAnalysisBackend(FixtureAnalysisBackend):
                 "provenance": {
                     "stage": "pitch_transcription",
                     "backend": self.name,
-                    "stem": "mix",
+                    "stem": self.stem_name,
                     "model": "basic_pitch_icassp_2022",
                     "runtime": "basic_pitch_python_api",
                 },
