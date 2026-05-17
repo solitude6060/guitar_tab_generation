@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 import sys
 
-from . import artifact_quality, chord_detection, section_sidecar, stem_notes, stem_separation, torchcrepe_f0
+from . import artifact_quality, chord_detection, evaluation_metrics, section_sidecar, stem_notes, stem_separation, torchcrepe_f0
 from .ai_backends import collect_ai_backend_status, format_ai_backend_status_markdown
 from .ai_runtime import build_resource_plan, collect_ai_runtime_status, format_runtime_status_markdown
 from .audio_preprocess import AudioPreprocessError
@@ -170,6 +170,18 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Output JSON path; defaults to <artifact_dir>/sections.json",
+    )
+    eval_report = subparsers.add_parser(
+        "eval-report",
+        help="Generate evaluation metrics from fixture manifest and artifact outputs",
+    )
+    eval_report.add_argument("artifact_root", type=Path)
+    eval_report.add_argument("--manifest", required=True, type=Path, help="Evaluation fixture manifest JSON")
+    eval_report.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Output JSON path; defaults to <artifact_root>/eval_report.json",
     )
     return parser
 
@@ -380,6 +392,15 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(f"Wrote {written}")
         return 0
+    if args.command == "eval-report":
+        try:
+            written = evaluation_metrics.write_eval_report(args.artifact_root, args.manifest, out_path=args.out)
+            report = evaluation_metrics.build_eval_report(args.artifact_root, args.manifest)
+        except evaluation_metrics.EvaluationReportError as exc:
+            print(f"Evaluation error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {written}")
+        return 0 if report["summary"]["status"] == "passed" else 3
     parser.error("unknown command")
     return 1
 
