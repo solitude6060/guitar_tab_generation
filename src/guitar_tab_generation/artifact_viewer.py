@@ -21,6 +21,7 @@ class ArtifactBundle:
     quality_report: dict[str, Any]
     tab_markdown: str
     f0_calibration: dict[str, Any] | None = None
+    chord_detection: dict[str, Any] | None = None
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -31,6 +32,18 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ArtifactViewerError(f"JSON artifact must be an object: {path.name}")
     return data
+
+
+def _read_optional_json_object(path: Path) -> dict[str, Any] | None:
+    """Read optional sidecar JSON; legacy non-object sidecars are ignored."""
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ArtifactViewerError(f"Invalid JSON artifact: {path.name}") from exc
+    if isinstance(data, dict):
+        return data
+    return None
 
 
 def load_artifact_bundle(artifact_dir: Path) -> ArtifactBundle:
@@ -52,6 +65,9 @@ def load_artifact_bundle(artifact_dir: Path) -> ArtifactBundle:
         tab_markdown=(artifact_dir / "tab.md").read_text(encoding="utf-8"),
         f0_calibration=_read_json(artifact_dir / "f0_calibration.json")
         if (artifact_dir / "f0_calibration.json").exists()
+        else None,
+        chord_detection=_read_optional_json_object(artifact_dir / "chords.json")
+        if (artifact_dir / "chords.json").exists()
         else None,
     )
 
@@ -198,6 +214,50 @@ def format_quality_summary_markdown(quality_report: dict[str, Any]) -> list[str]
     return lines
 
 
+def summarize_chord_detection(chord_detection: dict[str, Any] | None) -> dict[str, Any]:
+    """Summarize optional chord detection sidecar for viewer surfaces."""
+
+    if not chord_detection:
+        return {"available": False, "chords": [], "warnings": []}
+    chords = chord_detection.get("chords", [])
+    warnings = chord_detection.get("warnings", [])
+    summary = chord_detection.get("summary", {})
+    return {
+        "available": True,
+        "backend": chord_detection.get("backend", "unknown"),
+        "chords": chords if isinstance(chords, list) else [],
+        "warnings": warnings if isinstance(warnings, list) else [],
+        "average_confidence": summary.get("average_confidence") if isinstance(summary, dict) else None,
+        "low_confidence_count": summary.get("low_confidence_count", 0) if isinstance(summary, dict) else 0,
+    }
+
+
+def format_chord_detection_markdown(chord_detection: dict[str, Any] | None) -> list[str]:
+    """Return Markdown lines for optional chord detection sidecar summary."""
+
+    summary = summarize_chord_detection(chord_detection)
+    if not summary["available"]:
+        return []
+
+    lines = [
+        "",
+        "## Chord Detection Sidecar",
+        f"- Backend: {summary.get('backend', 'unknown')}",
+        f"- Chord progression: {_chord_progression(summary['chords'])}",
+        f"- Average confidence: {_format_confidence(summary.get('average_confidence'))}",
+        f"- Low-confidence chords: {summary.get('low_confidence_count', 0)}",
+    ]
+    if summary["warnings"]:
+        lines.append("- Warnings:")
+        for warning in summary["warnings"][:8]:
+            if not isinstance(warning, dict):
+                continue
+            lines.append(f"  - {warning.get('code', 'UNKNOWN')}: {warning.get('message', '')}")
+    else:
+        lines.append("- Warnings: none")
+    return lines
+
+
 def render_artifact_viewer_markdown(bundle: ArtifactBundle) -> str:
     """Render a stable Markdown summary for demos and practice review."""
 
@@ -240,6 +300,7 @@ def render_artifact_viewer_markdown(bundle: ArtifactBundle) -> str:
         lines.append("- None")
 
     lines.extend(format_f0_calibration_markdown(bundle.f0_calibration))
+    lines.extend(format_chord_detection_markdown(bundle.chord_detection))
     lines.extend(format_quality_summary_markdown(quality_report))
 
     lines.extend([
