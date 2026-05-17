@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 import sys
 
-from . import artifact_quality, chord_detection, stem_notes, stem_separation, torchcrepe_f0
+from . import artifact_quality, chord_detection, section_sidecar, stem_notes, stem_separation, torchcrepe_f0
 from .ai_backends import collect_ai_backend_status, format_ai_backend_status_markdown
 from .ai_runtime import build_resource_plan, collect_ai_runtime_status, format_runtime_status_markdown
 from .audio_preprocess import AudioPreprocessError
@@ -159,6 +159,17 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Output JSON path; defaults to <artifact_dir>/chords.json",
+    )
+    section_detect = subparsers.add_parser(
+        "section-detect",
+        help="Generate a deterministic sections.json sidecar from an artifact directory",
+    )
+    section_detect.add_argument("artifact_dir", type=Path)
+    section_detect.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Output JSON path; defaults to <artifact_dir>/sections.json",
     )
     return parser
 
@@ -358,6 +369,14 @@ def main(argv: list[str] | None = None) -> int:
             written = chord_detection.write_chord_sidecar(args.artifact_dir, out_path=args.out)
         except chord_detection.ChordDetectionError as exc:
             print(f"Chord detection error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Wrote {written}")
+        return 0
+    if args.command == "section-detect":
+        try:
+            written = section_sidecar.write_section_sidecar(args.artifact_dir, out_path=args.out)
+        except section_sidecar.SectionDetectionError as exc:
+            print(f"Section detection error: {exc}", file=sys.stderr)
             return 1
         print(f"Wrote {written}")
         return 0
